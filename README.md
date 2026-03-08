@@ -2,62 +2,85 @@
 
 LX-AI is an advanced application framework designed for interacting with large language models (LLMs), providing a comprehensive solution for AI-powered interactions and data management.
 
-## Features
+LX-AI 是一个先进的应用框架，专为与大型语言模型（LLMs）交互而设计，为AI驱动的交互和数据管理提供全面解决方案。
+
+## Features | 特性
 
 - **Multi-model Support**: Compatible with various LLM providers including OpenAI GPT series, Claude, Gemini, and locally deployed models.
+  - **多模型支持**：兼容多种LLM提供商，包括OpenAI GPT系列、Claude、Gemini和本地部署模型。
+
 - **Interactive CLI Interface**: User-friendly command-line interface for seamless interactions.
-- **Conversation Management**: Sophisticate conversation history tracking and management.
+  - **交互式CLI界面**：用户友好的命令行界面，实现无缝交互。
+
+- **Conversation Management**: Sophisticated conversation history tracking and management.
+  - **对话管理**：复杂的对话历史跟踪和管理。
+
 - **Data Persistence**: Robust local storage of conversations and configurations.
+  - **数据持久化**：强大的本地存储，保存对话和配置。
+
 - **Flexible Configuration**: Easy API key and preference configuration.
+  - **灵活配置**：轻松配置API密钥和首选项。
 
-## Installation
+## Installation | 安装
 
-### Method 1: Using Pre-built Executable (Recommended for macOS)
+### Method 1: Using Pre-built Executable (Recommended for macOS) | 方法1：使用预构建可执行文件（推荐macOS）
 
 1. Download the latest release from the releases section
+   - 从发布部分下载最新版本
+
 2. Extract the ZIP archive
+   - 解压缩ZIP归档
+
 3. Navigate to the extracted directory:
+   - 导航到提取的目录：
    ```bash
    cd LX_AI_Installer
    ```
-   
+
 4. Make the executable file runnable (first time only):
+   - 使可执行文件可运行（仅第一次）：
    ```bash
    chmod +x LX_AI
    ```
 
 5. Run the application:
+   - 运行应用程序：
    ```bash
    ./LX_AI
    ```
 
-### Method 2: From Source
+### Method 2: From Source | 方法2：从源码
 
 1. Ensure you have Python 3.9+ installed:
+   - 确保已安装Python 3.9+：
    ```bash
    python3 --version
    ```
 
 2. Clone the repository:
+   - 克隆仓库：
    ```bash
    git clone https://github.com/ArXav/LX-AI-System.git
    cd LX-AI-System
    ```
 
 3. Install dependencies:
+   - 安装依赖：
    ```bash
    pip install -r requirements.txt
    ```
 
 4. Run the application directly:
+   - 直接运行应用程序：
    ```bash
    cd src
    python cli.py
    ```
 
-## Building from Source
+## Building from Source | 从源码构建
 
 To rebuild the executable using PyInstaller:
+使用PyInstaller重建可执行文件：
 
 ```bash
 pip install pyinstaller
@@ -65,29 +88,77 @@ pyinstaller --onefile --name LX_AI src/cli.py
 ```
 
 The executable will be created in the `dist/` directory.
+可执行文件将在`dist/`目录中创建。
 
-## Usage
+## Usage | 使用方法
 
 After running the executable, you'll see the main menu with options to:
-- Open an existing project
-- Create a new project
-- Access system settings
-- Exit the application
+运行可执行文件后，您将看到主菜单，可以选择：
+- Open an existing project | 打开现有项目
+- Create a new project | 创建新项目
+- Access system settings | 访问系统设置
+- Exit the application | 退出应用程序
 
 Follow the interactive prompts to navigate the application.
+按照交互式提示导航应用程序。
 
-## Contributing
+## Project Overview | 项目概述
+
+**LX AI System** is a state-driven AI instruction disclosure framework that manages command set visibility through state machines, enabling secure and controllable AI interactions.
+
+**LX AI 系统** 是一个基于状态驱动的AI指令披露框架，通过状态机管理命令集的可见性，实现安全、可控的AI交互。
+
+### Core Features | 核心特性
+
+| Feature | Description | 特性 | 说明 |
+|---------|-------------|------|------|
+| **State Driven** | Command sets disclosed dynamically based on current state | **状态驱动** | 根据当前状态动态披露命令集 |
+| **Dual Mode Support** | Stable mode (preset) + Free mode (AI dynamic generation) | **双模式支持** | 稳定模式（预设）+ 自由模式（AI动态生成） |
+| **Dual Object Interaction** |面向用户（natural language）+ 面向系统（structured commands） | **双对象交互** | 面向用户（自然语言）+ 面向系统（结构化命令） |
+| **Project-Based Management** | Each project independently configured, supports custom paths | **项目制管理** | 每个项目独立配置，支持自定义路径 |
+| **Command Processors** | Supports echo, HTTP, system commands, plugins, data output | **命令处理器** | 支持echo、HTTP、系统命令、插件、数据输出 |
+| **CLI Interface** | Interactive command line management tool | **CLI界面** | 交互式命令行管理工具 |
+
+## Architecture | 架构
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         User Interface (CLI)                    │
+│                         用户界面 (CLI)                           │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│                        System Controller                        │
+│                        系统控制器                                │
+│                    (SystemController)                           │
+├─────────────┬─────────────┬─────────────┬─────────────────────┤
+│   State     │  Command    │  Command    │    Event Log        │
+│   Machine   │  Registry   │  Executor   │      Logger         │
+│   状态机    │   注册      │   执行      │      日志            │
+└─────────────┴─────────────┴─────────────┴─────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│                        LLM Integration Layer                    │
+│                        LLM集成层                                │
+│              (Dual Models: Architect + Executor)                │
+│              （双模型：架构师 + 执行者）                        │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+## Contributing | 贡献
 
 We welcome contributions! Please follow standard open-source practices:
-1. Fork the repository
-2. Create a feature branch
-3. Submit a pull request with your changes
+我们欢迎贡献！请遵循标准的开源实践：
+1. Fork the repository | Fork仓库
+2. Create a feature branch | 创建功能分支
+3. Submit a pull request with your changes | 提交带有更改的拉取请求
 
-## License
+## License | 许可证
 
 This project is licensed under the MIT License - see the [LICENSE](file:///Users/hypercmax/Documents/Project/LX/LICENSE) file for details.
+该项目根据MIT许可证授权 - 详见[LICENSE](file:///Users/hypercmax/Documents/Project/LX/LICENSE)文件。
 
-## Contact
+## Contact | 联系方式
 
 Author: ArXav
 Email: eurexon@outlook.com
@@ -313,7 +384,7 @@ LX/
 
 #### 6.3 项目配置 (`projects/项目名/project.yaml`)
 
-```yaml
+```
 project:
   name: "客服助手"
   version: "1.0"
