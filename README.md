@@ -11,6 +11,9 @@ LX/
 ├── src/                              # 源代码目录
 │   ├── LX_AI                         # UNIX可执行文件
 │   ├── cli.py                        # 主程序入口（CLI 界面）
+│   ├── frozen_application_license.txt # 打包许可证文件
+│   ├── lib/                          # 打包依赖库目录
+│   ├── share/                        # 打包共享资源目录
 │   └── core/                         # 核心模块
 │       ├── config.py                 # 系统配置常量
 │       ├── models.py                 # 数据模型定义
@@ -37,6 +40,7 @@ LX/
 ├── README.md                         # 项目说明
 ├── .gitignore                        # Git 忽略文件
 ├── cleanup_for_package.py            # 清理脚本（打包前使用）
+├── package.sh                        # 打包脚本
 └── setup.py                          # 项目打包配置
 ```
 
@@ -112,6 +116,9 @@ LX/
 | 文件       | 功能               |
 | :------- | :--------------- |
 | `LX_AI`  | 打包好的UNIX可执行文件    |
+| `frozen_application_license.txt` | 打包许可证文件 |
+| `lib/`   | 打包依赖库目录 |
+| `share/` | 打包共享资源目录 |
 | [`cli.py`](file:///Users/hypercmax/Documents/Project/LX/src/cli.py) | 主程序入口，交互式 CLI 界面 |
 
 ---
@@ -370,7 +377,12 @@ chmod +x src/LX_AI
 ./src/LX_AI
 ```
 
-这个可执行文件已经包含了所有必要的依赖，无需安装 Python 环境或依赖库。它是在 UNIX 环境下使用 cx_Freeze 打包工具构建的，可以在大多数类 UNIX 系统（如 Linux、macOS）上运行。
+这个可执行文件已经包含了所有必要的依赖，无需安装 Python 环境或依赖库。它是在 UNIX 环境下使用 cx_Freeze 打包工具构建的，可以在大多数类 UNIX 系统（如 Linux、macOS）上运行。完整的可执行程序包含以下组件：
+
+- `LX_AI` - 主可执行文件
+- `lib/` - 依赖库目录
+- `share/` - 共享资源目录
+- `frozen_application_license.txt` - 许可证文件
 
 ---
 
@@ -390,7 +402,7 @@ rm -rf .venv
 ./package.sh
 
 # 4. 验证
-ls -la ../LX_AI_System_*
+ls -la src/
 ```
 
 ---

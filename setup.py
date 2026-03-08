@@ -1,7 +1,11 @@
 # setup.py
 
-from cx_Freeze import setup, Executable
+import os
 import sys
+from cx_Freeze import setup, Executable
+
+# 添加src目录到Python路径
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "."))
 
 # =============================================================================
 # 构建配置
@@ -12,7 +16,6 @@ build_exe_options = {
     "packages": [
         "questionary", 
         "typer", 
-        "core", 
         "pathlib", 
         "typing", 
         "json", 
@@ -50,14 +53,15 @@ build_exe_options = {
     ],
     "excludes": [],
     "include_files": [],
-    "optimize": 2
+    "optimize": 2,
+    "path": [os.path.join(os.path.dirname(__file__), "src")] + sys.path  # 确保src目录在路径中
 }
 
 # =============================================================================
 # 应用配置
 # =============================================================================
 
-# 为 macOS 设置控制台应用程序
+# 为不同操作系统设置适当的base
 base = None
 if sys.platform == "win32":
     base = "Win32GUI"  # Windows上隐藏控制台窗口
