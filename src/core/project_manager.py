@@ -17,8 +17,15 @@ class ProjectManager:
 
         if self.is_bundle:
             # 含义：打包后 - 使用用户目录
-            self.base_dir = Path.home() / ".lx_ai"
-            self.base_dir.mkdir(parents=True, exist_ok=True)
+            try:
+                self.base_dir = Path.home() / ".lx_ai"
+                self.base_dir.mkdir(parents=True, exist_ok=True)
+            except Exception as e:
+                # 如果无法访问用户目录，则使用临时目录
+                import tempfile
+                self.base_dir = Path(tempfile.gettempdir()) / ".lx_ai"
+                self.base_dir.mkdir(parents=True, exist_ok=True)
+                print(f"⚠️  无法访问用户目录，使用临时目录：{self.base_dir}")
         else:
             # 含义：开发环境 - 使用项目根目录
             self.base_dir = Path(__file__).parent.parent
@@ -30,15 +37,29 @@ class ProjectManager:
             self.projects_root = Path(projects_root)
         else:
             self.projects_root = self.base_dir / "projects"
-        self.projects_root.mkdir(parents=True, exist_ok=True)
+        try:
+            self.projects_root.mkdir(parents=True, exist_ok=True)
+        except Exception as e:
+            print(f"⚠️  无法创建项目目录 {self.projects_root}: {e}")
+            import tempfile
+            self.projects_root = Path(tempfile.mkdtemp()) / "lx_ai_projects"
+            self.projects_root.mkdir(parents=True, exist_ok=True)
+            print(f"⚠️  使用临时项目目录：{self.projects_root}")
 
         # =====================================================================
         # 全局配置（只存项目路径列表，不存 API）
         # =====================================================================
         # 含义：全局配置始终在用户目录（打包前后都能访问）
-        self.user_config_dir = Path.home() / ".lx_ai"
-        self.user_config_dir.mkdir(parents=True, exist_ok=True)
-        self.global_config_path = self.user_config_dir / "config.json"
+        try:
+            self.user_config_dir = Path.home() / ".lx_ai"
+            self.user_config_dir.mkdir(parents=True, exist_ok=True)
+            self.global_config_path = self.user_config_dir / "config.json"
+        except Exception as e:
+            print(f"⚠️  无法访问用户配置目录: {e}")
+            import tempfile
+            self.user_config_dir = Path(tempfile.mkdtemp()) / ".lx_ai"
+            self.user_config_dir.mkdir(parents=True, exist_ok=True)
+            self.global_config_path = self.user_config_dir / "config.json"
 
         # 含义：API 配置在项目文件夹内（不在这里）
         self.api_config_path = None  # 每个项目独立
@@ -46,10 +67,11 @@ class ProjectManager:
         # 含义：加载全局配置（项目列表）
         self.global_config = self._load_global_config()
 
-        # 含义：打印路径信息
-        print(f"✅ 运行模式：{'打包' if self.is_bundle else '开发'}")
-        print(f"✅ 项目目录：{self.projects_root}")
-        print(f"📁 全局配置：{self.global_config_path}")
+        # 含义：打印路径信息（仅在非冻结状态下输出，避免在GUI应用中产生混乱）
+        if not getattr(sys, 'frozen', False) or ('TERM' in __import__('os').environ):
+            print(f"✅ 运行模式：{'打包' if self.is_bundle else '开发'}")
+            print(f"✅ 项目目录：{self.projects_root}")
+            print(f"📁 全局配置：{self.global_config_path}")
 
     def _load_global_config(self) -> Dict:
         if self.global_config_path.exists():
