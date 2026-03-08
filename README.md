@@ -49,6 +49,8 @@ Download the installer package:
    ```bash
    ./LX_AI
    ```
+   
+   **Important Note**: The application is interactive. After running the command, a menu will appear waiting for your input. Use arrow keys to navigate and Enter to select options.
 
 ### Method 2: From Source
 
