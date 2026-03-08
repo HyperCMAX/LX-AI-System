@@ -37,19 +37,15 @@ There are two ways to use LX-AI:
 
 ### Method 1: Using Pre-built Executable (Recommended)
 
-The executable is already built in the `src/` directory:
+Download the installer package:
 
-1. Navigate to the src directory:
-   ```bash
-   cd src
-   ```
-
-2. Make the executable file runnable:
+1. Download the installer from [LX_AI_Installer.zip](LX_AI_Installer.zip)
+2. Extract the ZIP file
+3. Make the executable file runnable:
    ```bash
    chmod +x LX_AI
    ```
-
-3. Run the application:
+4. Run the application:
    ```bash
    ./LX_AI
    ```
