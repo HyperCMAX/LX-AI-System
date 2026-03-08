@@ -1,15 +1,24 @@
 # LX-AI 系统 - 完整文件目录与技术文档
 
-**版本**: 1.1  
+**版本**: 1.3  
 **作者**: ArXav (eurexon@outlook.com)  
 **许可证**: MIT License  
-**分发方式**: 源代码分发 (无预编译安装包)
+**分发方式**: 源代码分发 | 可执行文件 (macOS arm64)
 
 ---
 
 ## 📖 项目概述
 
 **LX-AI 系统** 是一个基于状态驱动的 AI 指令披露框架，专为与大型语言模型（LLMs）交互而设计。它通过状态机管理命令集的可见性，实现安全、可控的 AI 交互，提供全面的 AI 驱动交互和数据管理解决方案。
+
+### ✨ v1.3 新特性
+
+| 特性 | 说明 |
+| :--- | :--- |
+| **🎯 智能状态跳转** | state_jump 处理器支持自动注册，无需手动配置 command_transitions |
+| **🔄 返回值追踪** | 完整的返回值生命周期管理（pending/waiting/completed） |
+| **⏱️ 超时机制** | 自动清理超时返回值，防止资源泄漏 |
+| **📊 三重优先级** | 显式配置 > 自动注册 > 默认行为的灵活控制机制 |
 
 ### 核心特性
 
@@ -65,7 +74,7 @@ python3 cli.py
 
 ## 📁 完整文件目录结构
 
-```text
+```
 LX/
 ├── README.md                         # 项目说明
 ├── setup.py                          # Python 包安装脚本
@@ -222,15 +231,17 @@ states:
 
 ### 2. 命令处理器类型
 
-| 类型 | 说明 | 配置示例 |
-| :--- | :--- | :--- |
-| **echo** | 返回固定文本 | `{"text": "你好，${name}"}` |
-| **run_command** | 执行系统命令 | `{"command": "ls", "args_from": "path"}` |
-| **http_request** | 发送 HTTP 请求 | `{"url": "...", "method": "POST"}` |
-| **plugin** | 调用 Python 插件 | `{"function": "my_handler"}` |
-| **state_jump** | 仅状态跳转 | `{"target": "next_state"}` |
-| **output** | 传出数据 | `{"output_key": "data", "format": "json"}` |
-| **none** | 无处理器 | - |
+| 类型 | 说明 | 配置示例 | 返回值 | 副作用 |
+| :--- | :--- | :--- | :--- | :--- |
+| **echo** | 返回固定文本 | `{"text": "你好，${name}"}` | str | ❌ 无 |
+| **run_command** | 执行系统命令 | `{"command": "ls", "args_from": "path"}` | str | ❌ 无 |
+| **http_request** | 发送 HTTP 请求 | `{"url": "...", "method": "POST"}` | str | ❌ 无 |
+| **plugin** | 调用 Python 插件 | `{"function": "my_handler"}` | any | ❌ 无 |
+| **state_jump** ⭐ | 状态跳转 | `{"target": "next_state"}` | str | ✅ 有 |
+| **output** | 传出数据 | `{"output_key": "data", "format": "json"}` | dict | ❌ 无 |
+| **none** | 无处理器 | - | - | ❌ 无 |
+
+> 💡 **注意**：只有 `state_jump` 处理器具有系统级副作用（改变状态机状态），采用双层控制机制（处理器层 + 配置层）。从 v1.3 开始支持自动注册机制。
 
 ### 3. 数据模型示例
 
@@ -254,6 +265,58 @@ states:
     "data_payload": null,
     "disclosed_commands": [...]
 }
+```
+
+---
+
+## 🔄 返回值追踪机制 (v1.3+)
+
+### 返回值类型
+
+| 类型 | 说明 | 触发方式 | 示例 |
+| :--- | :--- | :--- | :--- |
+| **自动返回值** | HTTP 请求、系统命令执行后自动捕获 | `has_return=true` | API 响应数据 |
+| **手动返回值** | 等待用户输入 | `wait_for_user` 处理器 | 用户确认信息 |
+| **外部返回值** | 监控文件系统获取 | `wait_for_external` 处理器 | `.return` 文件 |
+
+### 返回值状态生命周期
+
+```
+pending → waiting → completed/timeout
+   ↓         ↓           ↓
+ 创建     等待中      完成/超时
+```
+
+### CLI 使用返回值
+
+```bash
+# 查看所有等待中的返回值
+returns
+
+# 提交返回值（索引从 1 开始）
+return 1 success
+
+# 查看返回值历史
+returns --history
+```
+
+### 超时机制
+
+- 默认超时时间：300 秒（5 分钟）
+- 超时后自动清理，避免资源泄漏
+- 可通过 `command_timeout` 配置自定义
+
+### 编程接口
+
+```python
+# 获取所有等待中的返回值
+pending = controller.get_pending_returns()
+
+# 获取完整的返回值历史
+history = controller.get_return_history()
+
+# 清理已完成的返回值
+controller.clear_completed_returns()
 ```
 
 ---
@@ -315,6 +378,18 @@ states:
 4.  **验证**:
     检查生成的压缩包或可执行文件。
 
+### macOS arm64 可执行文件
+
+从 v1.3 开始，项目提供预编译的 macOS arm64 可执行文件（11MB），无需 Python 环境即可运行：
+
+```bash
+# 直接运行
+./dist/LX_AI main
+
+# 查看帮助
+./dist/LX_AI --help
+```
+
 ---
 
 ## ❓ 常见问题 (FAQ)
@@ -328,6 +403,9 @@ states:
 | **API 调用失败** | 检查 `api_config.json` 中 Key 和 URL 是否正确 |
 | **程序启动后无响应** | 正常现象，程序已进入菜单界面等待用户选择 |
 | **依赖安装失败** | 确保使用的是 Python 3.9+ 版本，并尝试 `pip install --upgrade pip` |
+| **state_jump 不跳转** | ✅ v1.3+ 已修复，支持自动注册机制 |
+| **返回值未提交给 AI** | 检查 `has_return` 和 `wait_for_return` 配置 |
+| **返回值超时** | 调整 `command_timeout` 配置或使用 `returns` 命令查看状态 |
 
 ---
 
@@ -364,4 +442,45 @@ pip install -r requirements.txt
 ### 联系方式
 *   **作者**: ArXav
 *   **邮箱**: eurexon@outlook.com
-*   **仓库**: [https://github.com/ArXav/LX-AI-System.git](https://github.com/ArXav/LX-AI-System.git)
+*   **仓库**: [https://github.com/HyperCMAX/LX-AI-System.git](https://github.com/HyperCMAX/LX-AI-System.git)
+
+---
+
+## 📊 版本历史
+
+### v1.3 (2026-03-09) - 当前版本
+
+**✨ 新特性：**
+- ✅ 实现完整的返回值追踪机制（pending/waiting/completed）
+- ✅ state_jump 处理器支持自动注册（三层优先级）
+- ✅ 超时机制自动清理返回值
+- ✅ 添加 get_pending_returns/get_return_history/clear_completed_returns 方法
+
+**🐛 修复：**
+- ✅ 修复 state_jump 缺少 command_transitions 时不跳转的问题
+- ✅ 优化处理器注册逻辑，支持显式配置优先 + 自动 fallback
+- ✅ 改进类型提示和边界条件处理
+
+**📝 文档：**
+- ✅ 更新 README 说明处理器行为特征
+- ✅ 添加返回值追踪使用指南
+- ✅ 完善双层控制机制说明
+
+**🔧 技术改进：**
+- ✅ 所有 6 种处理器类型测试通过
+- ✅ PyInstaller 打包优化（11MB）
+- ✅ 向后兼容旧配置文件
+
+### v1.2 (2024-01-XX)
+
+**功能：**
+- 添加返回值追踪基础功能
+- 优化 CLI 交互体验
+- 改进项目管理系统
+
+### v1.1 (2024-01-XX)
+
+**功能：**
+- 初始稳定版本
+- 状态驱动架构
+- 双模式支持（stable/free）
