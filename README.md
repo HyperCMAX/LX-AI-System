@@ -366,35 +366,15 @@ chmod +x LX_AI
 
 ### 13. 安装包发布
 
-我们现在提供 Mac 和 Windows 平台的安装包，用户只需下载安装包即可安装使用，无需处理多个文件。
+我们现在提供 Mac 和 Windows 平台的安装包，用户可以直接下载已构建好的安装包进行安装，无需配置 Python 环境或处理源码文件。
 
 #### 13.1 Mac 安装包
 
-要构建 Mac 安装包，请运行以下命令：
-
-```bash
-# 构建 Mac 应用安装包
-chmod +x build_mac_installer.sh
-./build_mac_installer.sh
-
-# 生成的安装包为 LX_AI_Mac_Installer.dmg
-# 用户只需下载该文件并拖拽到 Applications 文件夹即可安装
-```
+Mac 用户可直接下载位于项目根目录的安装包：[LX_AI_Mac_Installer.dmg](file:///Users/hypercmax/Documents/Project/LX/LX_AI_Mac_Installer.dmg)。下载后双击打开，并将应用程序拖拽至 `Applications` 文件夹即可完成安装。
 
 #### 13.2 Windows 安装包
 
-要构建 Windows 安装包，请执行以下步骤：
-
-```bash
-# 构建 Windows 安装包
-chmod +x build_windows_installer.sh
-./build_windows_installer.sh
-
-# 然后在 Windows 环境中运行生成的批处理文件：
-# 1. cd win_installer_temp
-# 2. create_installer.bat (标准安装包)
-# 3. 或 create_installer_with_pyinstaller.bat (单文件可执行程序)
-```
+Windows 用户可直接下载位于 `dist/` 目录下的可执行文件：[LX_AI_Windows.exe](file:///Users/hypercmax/Documents/Project/LX/dist/LX_AI_Windows.exe)。下载后直接运行该文件即可启动 LX AI 系统。
 
 ---
 

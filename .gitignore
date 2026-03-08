@@ -1,8 +1,15 @@
-# Python generated file and cache
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
+*.o
+*.pyd
+
+# C extensions
+*.so
+
+# Distribution / packaging
 .Python
 build/
 develop-eggs/
@@ -24,22 +31,22 @@ wheels/
 .venv/
 venv/
 env/
+ENV/
 
-# IDE specific
+# IDEs and editors
 .idea/
 .vscode/
 *.swp
 *.swo
-*~
 
-# OS generated
+# OS
 .DS_Store
 Thumbs.db
 
 # Logs
 *.log
 
-# Testing
+# Test
 .pytest_cache/
 .coverage
 htmlcov/
@@ -47,13 +54,17 @@ test_*.py
 demo_*.*
 scenario_example.py
 
-# Local configuration
+# Docs
+docs/_build/
+
+# Local config
 config.local.json
 *.local.json
+config_local.py
 
-# Compiled files
-*.o
-*.pyd
+# Exclude temporary build products but keep final installers
+!LX_AI_Mac_Installer.dmg
+!dist/LX_AI_Windows
 
 # Environment specific
 .env
