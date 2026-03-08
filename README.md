@@ -1,9 +1,8 @@
 # LX AI 系统 - 完整文件目录与技术文档
 
 作者：ArXav (eurexon@outlook.com)
-
 ---
-
+要是想直接用的话就下载[src/LX_AI](https://github.com/HyperCMAX/LX-AI-System/blob/main/src/LX_AI)
 ## 📁 完整文件目录结构
 
 ```
