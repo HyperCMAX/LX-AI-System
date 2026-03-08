@@ -1,237 +1,101 @@
-# LX-AI: Large Language Model Application Framework
+# LX-AI 系统 - 完整文件目录与技术文档
 
-LX-AI is an advanced application framework designed for interacting with large language models (LLMs), providing a comprehensive solution for AI-powered interactions and data management.
+**版本**: 1.1  
+**作者**: ArXav (eurexon@outlook.com)  
+**许可证**: MIT License  
+**分发方式**: 源代码分发 (无预编译安装包)
 
-LX-AI 是一个先进的应用框架，专为与大型语言模型（LLMs）交互而设计，为AI驱动的交互和数据管理提供全面解决方案。
+---
 
-## Features | 特性
+## 📖 项目概述
 
-- **Multi-model Support**: Compatible with various LLM providers including OpenAI GPT series, Claude, Gemini, and locally deployed models.
-  - **多模型支持**：兼容多种LLM提供商，包括OpenAI GPT系列、Claude、Gemini和本地部署模型。
+**LX-AI 系统** 是一个基于状态驱动的 AI 指令披露框架，专为与大型语言模型（LLMs）交互而设计。它通过状态机管理命令集的可见性，实现安全、可控的 AI 交互，提供全面的 AI 驱动交互和数据管理解决方案。
 
-- **Interactive CLI Interface**: User-friendly command-line interface for seamless interactions.
-  - **交互式CLI界面**：用户友好的命令行界面，实现无缝交互。
+### 核心特性
 
-- **Conversation Management**: Sophisticated conversation history tracking and management.
-  - **对话管理**：复杂的对话历史跟踪和管理。
+| 特性 | 说明 |
+| :--- | :--- |
+| **状态驱动** | 命令集根据当前状态动态披露，确保交互可控 |
+| **双模式支持** | **稳定模式**（预设流程）+ **自由模式**（AI 动态生成） |
+| **双对象交互** | 面向用户（自然语言）+ 面向系统（结构化命令） |
+| **项目制管理** | 每个项目独立配置，支持自定义路径与插件 |
+| **交互式 CLI** | 用户友好的命令行界面，无缝交互体验 |
+| **数据持久化** | 稳健的本地对话历史与配置存储 |
 
-- **Data Persistence**: Robust local storage of conversations and configurations.
-  - **数据持久化**：强大的本地存储，保存对话和配置。
+---
 
-- **Flexible Configuration**: Easy API key and preference configuration.
-  - **灵活配置**：轻松配置API密钥和首选项。
+## 🚀 快速开始
 
-## Installation | 安装
+本项目目前以**源代码形式**分发，用户需配置 Python 环境后运行。
 
-### Method 1: Using Pre-built Executable (Recommended for macOS) | 方法1：使用预构建可执行文件（推荐macOS）
+### 1. 环境要求
 
-1. Download the latest release from the releases section
-   - 从发布部分下载最新版本
-
-2. Extract the ZIP archive
-   - 解压缩ZIP归档
-
-3. Navigate to the extracted directory:
-   - 导航到提取的目录：
-   ```bash
-   cd LX_AI_Installer
-   ```
-
-4. Make the executable file runnable (first time only):
-   - 使可执行文件可运行（仅第一次）：
-   ```bash
-   chmod +x LX_AI
-   ```
-
-5. Run the application:
-   - 运行应用程序：
-   ```bash
-   ./LX_AI
-   ```
-
-### Method 2: From Source | 方法2：从源码
-
-1. Ensure you have Python 3.9+ installed:
-   - 确保已安装Python 3.9+：
-   ```bash
-   python3 --version
-   ```
-
-2. Clone the repository:
-   - 克隆仓库：
-   ```bash
-   git clone https://github.com/ArXav/LX-AI-System.git
-   cd LX-AI-System
-   ```
-
-3. Install dependencies:
-   - 安装依赖：
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. Run the application directly:
-   - 直接运行应用程序：
-   ```bash
-   cd src
-   python cli.py
-   ```
-
-## Building from Source | 从源码构建
-
-To rebuild the executable using PyInstaller:
-使用PyInstaller重建可执行文件：
+确保已安装 **Python 3.9+**。
 
 ```bash
-pip install pyinstaller
-pyinstaller --onefile --name LX_AI src/cli.py
+python3 --version
 ```
 
-The executable will be created in the `dist/` directory.
-可执行文件将在`dist/`目录中创建。
+### 2. 安装依赖
 
-## Usage | 使用方法
+克隆仓库后，在项目根目录安装所需依赖：
 
-After running the executable, you'll see the main menu with options to:
-运行可执行文件后，您将看到主菜单，可以选择：
-- Open an existing project | 打开现有项目
-- Create a new project | 创建新项目
-- Access system settings | 访问系统设置
-- Exit the application | 退出应用程序
-
-Follow the interactive prompts to navigate the application.
-按照交互式提示导航应用程序。
-
-## Project Overview | 项目概述
-
-**LX AI System** is a state-driven AI instruction disclosure framework that manages command set visibility through state machines, enabling secure and controllable AI interactions.
-
-**LX AI 系统** 是一个基于状态驱动的AI指令披露框架，通过状态机管理命令集的可见性，实现安全、可控的AI交互。
-
-### Core Features | 核心特性
-
-| Feature | Description | 特性 | 说明 |
-|---------|-------------|------|------|
-| **State Driven** | Command sets disclosed dynamically based on current state | **状态驱动** | 根据当前状态动态披露命令集 |
-| **Dual Mode Support** | Stable mode (preset) + Free mode (AI dynamic generation) | **双模式支持** | 稳定模式（预设）+ 自由模式（AI动态生成） |
-| **Dual Object Interaction** |面向用户（natural language）+ 面向系统（structured commands） | **双对象交互** | 面向用户（自然语言）+ 面向系统（结构化命令） |
-| **Project-Based Management** | Each project independently configured, supports custom paths | **项目制管理** | 每个项目独立配置，支持自定义路径 |
-| **Command Processors** | Supports echo, HTTP, system commands, plugins, data output | **命令处理器** | 支持echo、HTTP、系统命令、插件、数据输出 |
-| **CLI Interface** | Interactive command line management tool | **CLI界面** | 交互式命令行管理工具 |
-
-## Architecture | 架构
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                         User Interface (CLI)                    │
-│                         用户界面 (CLI)                           │
-└─────────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────────┐
-│                        System Controller                        │
-│                        系统控制器                                │
-│                    (SystemController)                           │
-├─────────────┬─────────────┬─────────────┬─────────────────────┤
-│   State     │  Command    │  Command    │    Event Log        │
-│   Machine   │  Registry   │  Executor   │      Logger         │
-│   状态机    │   注册      │   执行      │      日志            │
-└─────────────┴─────────────┴─────────────┴─────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────────┐
-│                        LLM Integration Layer                    │
-│                        LLM集成层                                │
-│              (Dual Models: Architect + Executor)                │
-│              （双模型：架构师 + 执行者）                        │
-└─────────────────────────────────────────────────────────────────┘
+```bash
+pip install -r requirements.txt
 ```
 
-## Contributing | 贡献
+### 3. 运行程序
 
-We welcome contributions! Please follow standard open-source practices:
-我们欢迎贡献！请遵循标准的开源实践：
-1. Fork the repository | Fork仓库
-2. Create a feature branch | 创建功能分支
-3. Submit a pull request with your changes | 提交带有更改的拉取请求
+进入 `src` 目录并启动 CLI 主程序：
 
-## License | 许可证
+```bash
+cd src
+python3 cli.py
+```
 
-This project is licensed under the MIT License - see the [LICENSE](file:///Users/hypercmax/Documents/Project/LX/LICENSE) file for details.
-该项目根据MIT许可证授权 - 详见[LICENSE](file:///Users/hypercmax/Documents/Project/LX/LICENSE)文件。
+*注：程序启动后进入菜单界面，选择"❌ 退出"可关闭程序。*
 
-## Contact | 联系方式
+### 4. 初始配置
 
-Author: ArXav
-Email: eurexon@outlook.com
+1.  **配置全局 API**: 在主菜单选择 `⚙️ 系统设置` → `全局 API 配置`，输入 API Key、Base URL 和模型名称。
+2.  **新建项目**: 在主菜单选择 `➕ 新建项目`，输入项目名称并选择保存位置。
+3.  **运行项目**: 打开项目后，选择 `▶️ 当前窗口运行` 开始交互。
 
-# LX AI 系统 - 完整文件目录与技术文档
-
-作者：ArXav (eurexon@outlook.com)
 ---
-要是想直接用的话就运行[src/LX_AI](https://github.com/HyperCMAX/LX-AI-System/blob/main/src/LX_AI)
+
 ## 📁 完整文件目录结构
 
-```
+```text
 LX/
-├── src/                              # 源代码目录
-│   ├── LX_AI                         # UNIX可执行文件
-│   ├── cli.py                        # 主程序入口（CLI 界面）
-│   ├── frozen_application_license.txt # 打包许可证文件
-│   ├── lib/                          # 打包依赖库目录
-│   ├── share/                        # 打包共享资源目录
-│   └── core/                         # 核心模块
-│       ├── config.py                 # 系统配置常量
-│       ├── models.py                 # 数据模型定义
-│       ├── registry.py               # 命令注册中心
-│       ├── state_machine.py          # 状态机管理
-│       ├── message_protocol.py       # 通讯协议定义
-│       ├── prompt_templates.py       # 提示词模板
-│       ├── parser.py                 # 响应解析器
-│       ├── executor.py               # 命令执行器
-│       ├── logger.py                 # 事件日志器
-│       ├── controller.py             # 系统控制器
-│       ├── config_manager.py         # 配置管理器
-│       ├── project_manager.py        # 项目管理器
-│       ├── project_loader.py         # 项目加载器
-│       └── command_handlers.py       # 命令处理器
-├── projects/                         # 项目存储目录
-│   └── [项目名]/                     # 每个项目独立文件夹
-│       ├── project.yaml              # 状态和命令编排
-│       ├── config.json               # 项目级 API 配置
-│       └── handlers.py               # 自定义插件
-├── api_config.json                   # 全局 API 配置
-├── config.json                       # 全局配置（项目列表等）
-├── requirements.txt                  # Python 依赖列表
 ├── README.md                         # 项目说明
-├── .gitignore                        # Git 忽略文件
-├── cleanup_for_package.py            # 清理脚本（打包前使用）
-├── package.sh                        # 打包脚本
-└── setup.py                          # 项目打包配置
+├── setup.py                          # Python 包安装脚本
+├── publish/                          # 发布目录
+│   ├── INSTALL.md                    # 安装说明
+│   ├── LX_AI                         # 可执行文件
+│   └── README.md                     # 发布版说明
+└── src/                              # 源代码目录
+    ├── cli.py                        # 主程序入口（CLI 界面）
+    ├── core/                         # 核心模块
+    │   ├── command_handlers.py       # 命令处理器
+    │   ├── config_manager.py         # 配置管理器
+    │   ├── config.py                 # 系统配置常量
+    │   ├── controller.py             # 系统控制器
+    │   ├── executor.py               # 命令执行器
+    │   ├── logger.py                 # 事件日志器
+    │   ├── message_protocol.py       # 通讯协议定义
+    │   ├── models.py                 # 数据模型定义
+    │   ├── parser.py                 # 响应解析器
+    │   ├── project_loader.py         # 项目加载器
+    │   ├── project_manager.py        # 项目管理器
+    │   ├── prompt_templates.py       # 提示词模板
+    │   ├── registry.py               # 命令注册中心
+    │   └── state_machine.py          # 状态机管理
+    └── projects/                     # 项目存储目录
 ```
 
 ---
 
-## 📄 项目技术文档
-
----
-
-### 1. 项目概述
-
-**LX AI 系统** 是一个基于状态驱动的 AI 指令披露框架，通过状态机管理命令集的可见性，实现安全、可控的 AI 交互。
-
-#### 核心特性
-
-| 特性         | 说明                         |
-| :--------- | :------------------------- |
-| **状态驱动**   | 命令集根据当前状态动态披露              |
-| **双模式支持**  | 稳定模式（预设）+ 自由模式（AI 动态生成）    |
-| **双对象交互**  | 面向用户（自然语言）+ 面向系统（结构化命令）    |
-| **项目制管理**  | 每个项目独立配置，支持自定义路径           |
-| **命令处理器**  | 支持 echo、HTTP、系统命令、插件、数据输出等 |
-| **CLI 界面** | 交互式命令行管理工具                 |
-
----
-
-### 2. 核心架构
+## 🏗 核心架构
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -252,129 +116,49 @@ LX/
 └─────────────────────────────────────────────────────────────────┘
 ```
 
----
+### 核心模块说明
 
-### 3. 模块说明
+| 模块 | 文件 | 功能 |
+| :--- | :--- | :--- |
+| **配置** | `core/config.py` | 系统常量（正则、深度限制、历史长度） |
+| **模型** | `core/models.py` | Pydantic 数据模型（命令、状态、事件、反馈） |
+| **注册** | `core/registry.py` | 命令注册与查询 |
+| **状态** | `core/state_machine.py` | 状态流转、深度计算、命令披露 |
+| **协议** | `core/message_protocol.py` | LLM 输入输出数据结构 |
+| **提示词** | `core/prompt_templates.py` | 系统提示词模板 |
+| **解析** | `core/parser.py` | LLM 输出解析与验证 |
+| **执行** | `core/executor.py` | 命令执行与结果返回 |
+| **日志** | `core/logger.py` | 系统事件记录（滑动窗口） |
+| **控制器** | `core/controller.py` | 核心编排（状态 + 命令+LLM） |
+| **项目管理** | `core/project_manager.py` | 项目创建、打开、保存 |
+| **命令处理** | `core/command_handlers.py` | 命令处理器（echo/HTTP/插件等） |
 
-#### 3.1 核心模块 ([`src/core/`](file:///Users/hypercmax/Documents/Project/LX/src/core/__init__.py))
+### 辅助脚本 (`src/`)
 
-| 模块       | 文件                    | 功能                         |
-| :------- | :-------------------- | :------------------------- |
-| **配置**   | [`config.py`](file:///Users/hypercmax/Documents/Project/LX/src/core/config.py)           | 系统常量（正则、深度限制、历史长度）         |
-| **模型**   | [`models.py`](file:///Users/hypercmax/Documents/Project/LX/src/core/models.py)           | Pydantic 数据模型（命令、状态、事件、反馈） |
-| **注册**   | [`registry.py`](file:///Users/hypercmax/Documents/Project/LX/src/core/registry.py)         | 命令注册与查询                    |
-| **状态**   | [`state_machine.py`](file:///Users/hypercmax/Documents/Project/LX/src/core/state_machine.py)    | 状态流转、深度计算、命令披露             |
-| **协议**   | [`message_protocol.py`](file:///Users/hypercmax/Documents/Project/LX/src/core/message_protocol.py) | LLM 输入输出数据结构               |
-| **提示词**  | [`prompt_templates.py`](file:///Users/hypercmax/Documents/Project/LX/src/core/prompt_templates.py) | 系统提示词模板                    |
-| **解析**   | [`parser.py`](file:///Users/hypercmax/Documents/Project/LX/src/core/parser.py)           | LLM 输出解析与验证                |
-| **执行**   | [`executor.py`](file:///Users/hypercmax/Documents/Project/LX/src/core/executor.py)         | 命令执行与结果返回                  |
-| **日志**   | [`logger.py`](file:///Users/hypercmax/Documents/Project/LX/src/core/logger.py)           | 系统事件记录（滑动窗口）               |
-| **控制器**  | [`controller.py`](file:///Users/hypercmax/Documents/Project/LX/src/core/controller.py)       | 核心编排（状态 + 命令+LLM）          |
-| **配置管理** | [`config_manager.py`](file:///Users/hypercmax/Documents/Project/LX/src/core/config_manager.py)   | 全局配置读写                     |
-| **项目管理** | [`project_manager.py`](file:///Users/hypercmax/Documents/Project/LX/src/core/project_manager.py)  | 项目创建、打开、保存                 |
-| **项目加载** | [`project_loader.py`](file:///Users/hypercmax/Documents/Project/LX/src/core/project_loader.py)   | 加载项目配置到系统                  |
-| **命令处理** | [`command_handlers.py`](file:///Users/hypercmax/Documents/Project/LX/src/core/command_handlers.py) | 命令处理器（echo/HTTP/插件等）       |
-
-#### 3.2 入口模块 ([`src/`](file:///Users/hypercmax/Documents/Project/LX/src/core/__init__.py))
-
-| 文件       | 功能               |
-| :------- | :--------------- |
-| `LX_AI`  | 打包好的UNIX可执行文件    |
-| `frozen_application_license.txt` | 打包许可证文件 |
-| `lib/`   | 打包依赖库目录 |
-| `share/` | 打包共享资源目录 |
-| [`cli.py`](file:///Users/hypercmax/Documents/Project/LX/src/cli.py) | 主程序入口，交互式 CLI 界面 |
+| 文件 | 功能 |
+| :--- | :--- |
+| `cli.py` | 主程序入口，交互式 CLI 界面 |
+| `test_*.py` | 各阶段功能测试脚本 |
+| `scenario_example.py` | 场景配置示例 |
+| `demo_run.py` | 简易演示入口 |
+| `verify_depth.py` | 深度限制验证工具 |
 
 ---
 
-### 4. 数据模型
+## ⚙️ 配置说明
 
-#### 4.1 命令定义 (`CommandDefinition`)
-
-```python
-{
-    "id": "search",                    # 命令 ID（小写字母 + 数字 + 下划线）
-    "description": "搜索文件",          # 命令描述
-    "parameters_schema": {"query": "str"},  # 参数定义
-    "has_return": true,                # 是否有返回值
-    "wait_for_return": false,          # 是否等待返回值
-    "handler": {                       # 处理器配置（可选）
-        "type": "http_request",
-        "config": {"url": "...", "method": "POST"}
-    }
-}
-```
-
-#### 4.2 状态节点 (`StateNode`)
-
-```python
-{
-    "id": "root",                      # 状态 ID
-    "description": "主菜单",            # 状态描述
-    "mode": "stable",                  # 模式：stable / free
-    "parent_id": null,                 # 父状态 ID（支持嵌套）
-    "available_command_ids": ["help", "search"],  # 可用命令
-    "command_transitions": {           # 命令跳转映射
-        "search": "search_state"
-    }
-}
-```
-
-#### 4.3 系统反馈 (`SystemFeedback`)
-
-```python
-{
-    "current_state": {...},            # 当前状态
-    "event_history": [...],            # 事件历史（最多 100 条）
-    "data_payload": null,              # 命令返回数据
-    "disclosed_commands": [...]        # 当前可用命令列表
-}
-```
-
-#### 4.4 模型动作 (`ModelAction`)
-
-```python
-{
-    "thought": "用户想搜索文件",        # 模型思考过程
-    "action_type": "call_command",     # 动作类型
-    "response_to_user": "正在搜索...", # 给用户的回复
-    "command_id": "search",            # 要执行的命令
-    "command_params": {"query": "..."} # 命令参数
-}
-```
-
----
-
-### 5. 命令处理器类型
-
-| 类型                | 说明           | 配置示例                                       |
-| :---------------- | :----------- | :----------------------------------------- |
-| **echo**          | 返回固定文本       | `{"text": "你好，${name}"}`                   |
-| **run\_command**  | 执行系统命令       | `{"command": "ls", "args_from": "path"}`   |
-| **http\_request** | 发送 HTTP 请求   | `{"url": "...", "method": "POST"}`         |
-| **plugin**        | 调用 Python 插件 | `{"function": "my_handler"}`               |
-| **state\_jump**   | 仅状态跳转        | `{"target": "next_state"}`                 |
-| **output**        | 传出数据         | `{"output_key": "data", "format": "json"}` |
-| **none**          | 无处理器         | -                                          |
-
----
-
-### 6. 配置文件说明
-
-#### 6.1 全局 API 配置 (`api_config.json`)
-
+### 1. 全局 API 配置 (`api_config.json`)
 ```json
 {
     "api": {
-        "key": "",
+        "key": "YOUR_API_KEY",
         "base_url": "https://api.openai.com/v1",
         "model": "gpt-3.5-turbo"
     }
 }
 ```
 
-#### 6.2 全局配置 (`config.json`)
-
+### 2. 全局系统配置 (`config.json`)
 ```json
 {
     "last_project": "/path/to/project",
@@ -382,9 +166,8 @@ LX/
 }
 ```
 
-#### 6.3 项目配置 (`projects/项目名/project.yaml`)
-
-```
+### 3. 项目配置 (`projects/项目名/project.yaml`)
+```yaml
 project:
   name: "客服助手"
   version: "1.0"
@@ -414,8 +197,8 @@ states:
       search: "search_state"
 ```
 
-#### 6.4 项目级 API 配置 (`projects/项目名/config.json`)
-
+### 4. 项目级 API 配置 (`projects/项目名/config.json`)
+项目可独立配置 API，覆盖全局设置。
 ```json
 {
     "api": {
@@ -428,70 +211,136 @@ states:
 
 ---
 
-### 7. CLI 命令说明
+## 🛠 功能详解
 
-| 方式    | 命令                                 | 说明                | 示例                                          |
-| :---- | :--------------------------------- | :---------------- | :------------------------------------------ |
-| 源码    | `python3 cli.py`                   | 启动主菜单             | -                                           |
-| 源码    | `python3 cli.py main`              | 启动主菜单             | -                                           |
-| 源码    | `python3 cli.py run-single <path>` | 单窗口运行项目           | `python3 cli.py run-single ./projects/demo` |
-| 可执行文件 | `./LX_AI`                          | 启动主菜单（无需Python环境） | -                                           |
-| 可执行文件 | `./LX_AI main`                     | 启动主菜单（无需Python环境） | -                                           |
+### 1. 运行模式
 
-**主菜单功能**：
-- 📁 打开项目（列表选择 / 手动输入路径）
-- ➕ 新建项目（默认目录 / 自定义路径）
-- ⚙️ 系统设置（全局 API 配置 / 项目目录设置）
-- ❌ 退出
+| 模式 | 说明 | 适用场景 |
+| :--- | :--- | :--- |
+| **稳定模式 (stable)** | 命令集预设，不可动态更改。状态跳转由 `command_transitions` 配置。 | 固定业务流程（如支付、审批） |
+| **自由模式 (free)** | 架构师 AI 动态生成状态描述和命令集。深度限制最多 5 层。 | 探索性任务（如调研、创意） |
 
-**项目内功能**：
-- ▶️ 当前窗口运行 / 🪟 新窗口运行
-- 📝 命令管理（添加 / 编辑 / 删除）
-- 🗂️ 状态编排（添加 / 编辑 / 命令绑定 / 跳转配置）
-- ⚙️ 项目配置（API 配置 / 模型配置 / 项目信息）
+### 2. 命令处理器类型
+
+| 类型 | 说明 | 配置示例 |
+| :--- | :--- | :--- |
+| **echo** | 返回固定文本 | `{"text": "你好，${name}"}` |
+| **run_command** | 执行系统命令 | `{"command": "ls", "args_from": "path"}` |
+| **http_request** | 发送 HTTP 请求 | `{"url": "...", "method": "POST"}` |
+| **plugin** | 调用 Python 插件 | `{"function": "my_handler"}` |
+| **state_jump** | 仅状态跳转 | `{"target": "next_state"}` |
+| **output** | 传出数据 | `{"output_key": "data", "format": "json"}` |
+| **none** | 无处理器 | - |
+
+### 3. 数据模型示例
+
+**命令定义 (`CommandDefinition`)**
+```python
+{
+    "id": "search",
+    "description": "搜索文件",
+    "parameters_schema": {"query": "str"},
+    "has_return": true,
+    "wait_for_return": false,
+    "handler": { "type": "http_request", "config": {...} }
+}
+```
+
+**系统反馈 (`SystemFeedback`)**
+```python
+{
+    "current_state": {...},
+    "event_history": [...],  # 最多 100 条
+    "data_payload": null,
+    "disclosed_commands": [...]
+}
+```
 
 ---
 
-### 8. 运行模式
+## 💻 CLI 使用指南
 
-#### 8.1 稳定模式 (`stable`)
+### 启动命令
 
-- 命令集预设，不可动态更改
-- 适用于固定业务流程（如支付、审批）
-- 状态跳转由 `command_transitions` 配置
+| 命令 | 说明 | 示例 |
+| :--- | :--- | :--- |
+| `python3 cli.py` | 启动主菜单 | `cd src && python3 cli.py` |
+| `python3 cli.py main` | 启动主菜单 | `cd src && python3 cli.py main` |
+| `python3 cli.py run-single <path>` | 单窗口运行项目 | `python3 cli.py run-single ./projects/demo` |
 
-#### 8.2 自由模式 (`free`)
+### 主菜单功能
+*   📁 **打开项目**: 列表选择或手动输入路径
+*   ➕ **新建项目**: 默认目录或自定义路径
+*   ⚙️ **系统设置**: 全局 API 配置 / 项目目录设置
+*   ❌ **退出**: 关闭应用程序
 
-- 架构师 AI 动态生成状态描述和命令集
-- 适用于探索性任务（如调研、创意）
-- 深度限制：最多 5 层嵌套
+### 项目内功能
+*   ▶️ **运行**: 当前窗口运行 / 新窗口运行
+*   📝 **命令管理**: 添加 / 编辑 / 删除
+*   🗂️ **状态编排**: 添加 / 编辑 / 命令绑定 / 跳转配置
+*   ⚙️ **项目配置**: API 配置 / 模型配置 / 项目信息
 
 ---
 
-### 9. 安全机制
+## 🔒 安全机制
 
-| 机制           | 说明                          |
-| :----------- | :-------------------------- |
+| 机制 | 说明 |
+| :--- | :--- |
 | **命令 ID 验证** | 正则 `^[a-z][a-z0-9_]*$`，防止注入 |
-| **深度限制**     | 自由模式最多 5 层，防止无限嵌套           |
-| **事件历史限制**   | 最多 100 条，防止 Token 爆炸        |
-| **配置分离**     | 全局/项目级配置独立，支持多环境            |
-| **打包清理**     | 提供清理脚本，移除敏感数据               |
+| **深度限制** | 自由模式最多 5 层，防止无限嵌套 |
+| **事件历史限制** | 最多 100 条，防止 Token 爆炸 |
+| **配置分离** | 全局/项目级配置独立，支持多环境 |
+| **打包清理** | 提供清理脚本，移除敏感数据 |
 
 ---
 
-### 10. 依赖说明
+## 📦 打包与发布 (开发者)
+
+本项目主要提供源码，如需自行打包可执行文件：
+
+1.  **清理敏感数据**:
+    ```bash
+    python3 cleanup_for_package.py
+    ```
+2.  **删除缓存**:
+    ```bash
+    find . -name "*.pyc" -delete
+    find . -name "__pycache__" -type d -exec rm -rf {} +
+    rm -rf .venv
+    ```
+3.  **执行打包**:
+    ```bash
+    ./package.sh
+    ```
+4.  **验证**:
+    检查生成的压缩包或可执行文件。
+
+---
+
+## ❓ 常见问题 (FAQ)
+
+| 问题 | 解决方案 |
+| :--- | :--- |
+| **Missing command** | 检查 `cli.py` 是否有 `@app.callback` 装饰器 |
+| **JSON 解析错误** | 删除 `config.json` 和 `api_config.json` 后重启 |
+| **命令 ID 验证失败** | 确保 ID 以小写字母开头，只含字母数字下划线 |
+| **新窗口无法打开** | macOS 需允许 Terminal 的 AppleScript 权限 |
+| **API 调用失败** | 检查 `api_config.json` 中 Key 和 URL 是否正确 |
+| **程序启动后无响应** | 正常现象，程序已进入菜单界面等待用户选择 |
+| **依赖安装失败** | 确保使用的是 Python 3.9+ 版本，并尝试 `pip install --upgrade pip` |
+
+---
+
+## 📄 依赖说明
 
 **requirements.txt**:
-```
-questionary>=2.1.0
-typer>=0.24.0
-cx_Freeze>=8.6.0
-prompt_toolkit>=3.0.0
-rich>=14.3.0
-PyYAML>=6.0
-requests>=2.32.0
-pydantic>=2.12.0
+```text
+typer>=0.9.0
+questionary>=2.0.0
+pyyaml>=6.0
+rich>=13.0.0
+requests>=2.31.0
+pydantic>=2.0.0
 ```
 
 **安装**:
@@ -501,63 +350,18 @@ pip install -r requirements.txt
 
 ---
 
-### 11. 快速开始
+## 🤝 贡献与许可
 
-```bash
-# 1. 源码方式：安装依赖
-pip install -r requirements.txt
+### 贡献指南
+我们欢迎贡献！请遵循标准的开源实践：
+1.  Fork 本仓库
+2.  创建功能分支
+3.  提交包含您更改的 Pull Request
 
-# 2. 源码方式：启动 CLI
-cd src
-python3 cli.py
+### 许可证
+本项目采用 **MIT License** 许可。
 
-# 或者直接运行可执行文件（无需安装Python环境）
-cd src
-chmod +x LX_AI
-./LX_AI
-```
-
----
-
-### 12. 重要说明
-
-**关于程序运行行为**：
-- `cli.py` 是一个交互式程序，运行后会进入菜单界面等待用户输入
-- 当您运行 `python src/cli.py` 或 `./src/LX_AI` 时，程序正常启动会显示主菜单选项
-- 要退出程序，可以在菜单中选择"❌ 退出"选项
-- 如果程序正常显示菜单（如："📁 打开项目", "➕ 新建项目", "⚙️ 系统设置", "❌ 退出"），则表示程序运行正常
-
----
-
-### 13. 安装包发布
-
-我们现在提供 Mac 和 Windows 平台的安装包，用户可以直接下载已构建好的安装包进行安装，无需配置 Python 环境或处理源码文件。
-
-#### 13.1 Mac 安装包
-
-Mac 用户可直接下载位于项目根目录的安装包：[LX_AI_Mac_Installer.dmg](file:///Users/hypercmax/Documents/Project/LX/LX_AI_Mac_Installer.dmg)。下载后双击打开，并将应用程序拖拽至 `Applications` 文件夹即可完成安装。
-
-#### 13.2 Windows 安装包
-
-Windows 用户可直接下载位于 `dist/` 目录下的可执行文件：[LX_AI_Windows.exe](file:///Users/hypercmax/Documents/Project/LX/dist/LX_AI_Windows.exe)。下载后直接运行该文件即可启动 LX AI 系统。
-
----
-
-### 14. 常见问题
-
-| 问题                  | 解决方案                                     |
-| :------------------ | :--------------------------------------- |
-| **Missing command** | 检查 `cli.py` 是否有 `@app.callback` 装饰器      |
-| **JSON 解析错误**       | 删除 `config.json` 和 `api_config.json` 后重启 |
-| **命令 ID 验证失败**      | 确保 ID 以小写字母开头，只含字母数字下划线                  |
-| **新窗口无法打开**         | macOS 需允许 Terminal 的 AppleScript 权限      |
-| **API 调用失败**        | 检查 `api_config.json` 中 Key 和 URL 是否正确    |
-| **程序启动后无响应**        | 这是正常的，程序已进入菜单界面等待用户选择                    |
-| **UNIX 可执行文件无法运行**  | 确保文件具有可执行权限 (`chmod +x src/LX_AI`)       |
-
----
-
----
-
-**文档版本**: 1.1  
-作者：ArXav (eurexon@outlook.com)
+### 联系方式
+*   **作者**: ArXav
+*   **邮箱**: eurexon@outlook.com
+*   **仓库**: [https://github.com/ArXav/LX-AI-System.git](https://github.com/ArXav/LX-AI-System.git)
