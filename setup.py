@@ -12,7 +12,6 @@ build_exe_options = {
     "packages": [
         "questionary", 
         "typer", 
-        "core", 
         "pathlib", 
         "typing", 
         "json", 
@@ -49,7 +48,8 @@ build_exe_options = {
         "urllib3"
     ],
     "excludes": [],
-    "include_files": [],
+    "include_files": [("src/core", "core")],
+    "include_path": ["src"],
     "optimize": 2
 }
 
