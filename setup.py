@@ -54,7 +54,10 @@ build_exe_options = {
     "excludes": [],
     "include_files": [],
     "optimize": 2,
-    "path": [os.path.join(os.path.dirname(__file__), "src")] + sys.path  # 确保src目录在路径中
+    "compressed": True,
+    "include_msvcrt": True,
+    "silent": True,
+    "build_exe": "dist/LX_AI_Standalone"  # 独立构建目录
 }
 
 # =============================================================================
