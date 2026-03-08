@@ -10,6 +10,7 @@
 ## 📖 项目概述
 
 **LX-AI 系统** 是一个基于状态驱动的 AI 指令披露框架，专为与大型语言模型（LLMs）交互而设计。它通过状态机管理命令集的可见性，实现安全、可控的 AI 交互，提供全面的 AI 驱动交互和数据管理解决方案。
+如果你想直接使用，可以直接下载此unix文件 -->[src/LX_AI](https://github.com/HyperCMAX/LX-AI-System/blob/main/src/LX_AI)
 
 ### 核心特性
 
