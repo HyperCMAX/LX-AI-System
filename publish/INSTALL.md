@@ -1,4 +1,47 @@
-# LX-AI Installation Guide
+# LX-AI 安装指南
+
+## 方法一：使用预构建可执行文件（推荐）
+
+1. 下载最新发布的安装包
+2. 解压ZIP归档文件
+3. 进入解压后的目录：
+   ```bash
+   cd LX_AI_Installer
+   ```
+
+4. 使可执行文件可运行（首次运行时）：
+   ```bash
+   chmod +x LX_AI
+   ```
+
+5. 运行应用程序：
+   ```bash
+   ./LX_AI
+   ```
+
+## 方法二：从源码安装
+
+1. 确保已安装Python 3.9+：
+   ```bash
+   python3 --version
+   ```
+
+2. 克隆仓库：
+   ```bash
+   git clone https://github.com/ArXav/LX-AI-System.git
+   cd LX-AI-System
+   ```
+
+3. 安装依赖：
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. 直接运行应用程序：
+   ```bash
+   cd src
+   python cli.py
+   ```
 
 ## Prerequisites
 
