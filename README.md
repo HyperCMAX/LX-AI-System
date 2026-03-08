@@ -10,17 +10,49 @@ LX-AI is an advanced application framework designed for interacting with large l
 - **Data Persistence**: Robust local storage of conversations and configurations.
 - **Flexible Configuration**: Easy API key and preference configuration.
 
+## Project Structure
+
+```
+LX-AI-System/
+├── README.md                 # Project documentation
+├── LICENSE                   # MIT license information
+├── requirements.txt          # Python dependencies
+├── setup.py                  # Build configuration for executable
+├── api_config.json           # Global API configuration file
+├── src/                      # Source code directory
+│   ├── cli.py               # Main CLI entry point
+│   ├── LX_AI                # Compiled executable
+│   ├── core/                # Core application modules
+│   │   ├── controller.py    # Main system controller
+│   │   ├── models.py        # Data models
+│   │   ├── project_manager.py # Project management logic
+│   │   └── ...              # Other core modules
+│   └── setup.py             # Setup configuration for this subdirectory
+└── .github/                  # GitHub workflow configurations
+```
+
 ## Installation
 
 There are two ways to use LX-AI:
 
-### Method 1: Using Pre-built Installer (Recommended)
+### Method 1: Using Pre-built Executable (Recommended)
 
-Download the appropriate installer for your platform:
+The executable is already built in the `src/` directory:
 
-- **Mac Users**: Download [LX_AI_Mac_Installer.zip](LX_AI_Mac_Installer.zip)
-  - Extract the ZIP file
-  - Navigate to the extracted folder and double-click on the LX_AI executable to run the application
+1. Navigate to the src directory:
+   ```bash
+   cd src
+   ```
+
+2. Make the executable file runnable:
+   ```bash
+   chmod +x LX_AI
+   ```
+
+3. Run the application:
+   ```bash
+   ./LX_AI
+   ```
 
 ### Method 2: From Source
 
@@ -35,21 +67,11 @@ Download the appropriate installer for your platform:
    pip install -r requirements.txt
    ```
 
-## Usage
-
-Run the application:
-
-```bash
-cd src
-python cli.py
-```
-
-Or execute the packaged binary:
-
-```bash
-cd src
-./LX_AI
-```
+3. Run the application directly:
+   ```bash
+   cd src
+   python cli.py
+   ```
 
 ## Building from Source
 
@@ -82,7 +104,7 @@ Email: eurexon@outlook.com
 
 作者：ArXav (eurexon@outlook.com)
 ---
-要是想直接用的话就下载[src/LX_AI](https://github.com/HyperCMAX/LX-AI-System/blob/main/src/LX_AI)
+要是想直接用的话就运行[src/LX_AI](https://github.com/HyperCMAX/LX-AI-System/blob/main/src/LX_AI)
 ## 📁 完整文件目录结构
 
 ```

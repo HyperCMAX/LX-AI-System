@@ -29,8 +29,8 @@ wheels/
 
 # Virtual environments
 .venv/
-venv/
 env/
+venv/
 ENV/
 
 # IDEs and editors
@@ -50,19 +50,23 @@ Thumbs.db
 .pytest_cache/
 .coverage
 htmlcov/
-test_*.py
-demo_*.*
-scenario_example.py
 
 # Docs
 docs/_build/
 
 # Local config
-config.local.json
-*.local.json
 config_local.py
 
 # Exclude temporary build products but keep final installers
+*.spec
+*.zip
+
+# Ignore the published packages
+publish/
+
+# Local configuration files
+config.json
+api_config.json
 
 # Environment specific
 .env

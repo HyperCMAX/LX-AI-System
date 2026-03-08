@@ -4,6 +4,29 @@ import os
 import sys
 from cx_Freeze import setup, Executable
 
+# Dependencies are automatically detected, but it might need fine tuning.
+build_options = {
+    'packages': [],
+    'excludes': [],
+    'include_files': []  # 添加任何需要包含的非Python文件
+}
+
+executables = [
+    Executable(
+        'src/cli.py',  # 主入口脚本
+        target_name='LX_AI',  # 输出的可执行文件名
+        base=None  # 使用None以支持控制台和非控制台应用
+    )
+]
+
+setup(
+    name='LX_AI',
+    version='1.0.0',
+    description='Large Language Model Application Framework',
+    options={'build_exe': build_options},
+    executables=executables
+)
+
 # 添加src目录到Python路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "."))
 
