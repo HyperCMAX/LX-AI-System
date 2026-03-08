@@ -365,49 +365,41 @@ chmod +x LX_AI
 
 ---
 
-### 13. UNIX 可执行文件
+### 13. 安装包发布
 
-在 `src/` 目录下，我们提供了打包好的 UNIX 可执行文件 `LX_AI`，具有以下特点：
+我们现在提供 Mac 和 Windows 平台的安装包，用户只需下载安装包即可安装使用，无需处理多个文件。
+
+#### 13.1 Mac 安装包
+
+要构建 Mac 安装包，请运行以下命令：
 
 ```bash
-# 使文件具有可执行权限
-chmod +x src/LX_AI
+# 构建 Mac 应用安装包
+chmod +x build_mac_installer.sh
+./build_mac_installer.sh
 
-# 直接运行程序（无需安装Python环境）
-./src/LX_AI
+# 生成的安装包为 LX_AI_Mac_Installer.dmg
+# 用户只需下载该文件并拖拽到 Applications 文件夹即可安装
 ```
 
-这个可执行文件已经包含了所有必要的依赖，无需安装 Python 环境或依赖库。它是在 UNIX 环境下使用 cx_Freeze 打包工具构建的，可以在大多数类 UNIX 系统（如 Linux、macOS）上运行。完整的可执行程序包含以下组件：
+#### 13.2 Windows 安装包
 
-- `LX_AI` - 主可执行文件
-- `lib/` - 依赖库目录
-- `share/` - 共享资源目录
-- `frozen_application_license.txt` - 许可证文件
-
----
-
-### 14. 打包发布
+要构建 Windows 安装包，请执行以下步骤：
 
 ```bash
-# 1. 清理敏感数据
-cd /Users/hypercmax/PycharmProjects/LX
-python3 cleanup_for_package.py
+# 构建 Windows 安装包
+chmod +x build_windows_installer.sh
+./build_windows_installer.sh
 
-# 2. 删除缓存
-find . -name "*.pyc" -delete
-find . -name "__pycache__" -type d -exec rm -rf {} +
-rm -rf .venv
-
-# 3. 打包
-./package.sh
-
-# 4. 验证
-ls -la src/
+# 然后在 Windows 环境中运行生成的批处理文件：
+# 1. cd win_installer_temp
+# 2. create_installer.bat (标准安装包)
+# 3. 或 create_installer_with_pyinstaller.bat (单文件可执行程序)
 ```
 
 ---
 
-### 15. 常见问题
+### 14. 常见问题
 
 | 问题                  | 解决方案                                     |
 | :------------------ | :--------------------------------------- |
