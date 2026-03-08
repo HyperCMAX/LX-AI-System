@@ -58,14 +58,6 @@ class ResponseParser:
             # 含义：标准化 action_type
             data["action_type"] = action_type_mapping.get(action_type, action_type)
 
-        # =============================================================
-        # 【关键修复】确保 has_return 和 wait_for_return 有默认值
-        # =============================================================
-        if "has_return" not in data:
-            data["has_return"] = False
-        if "wait_for_return" not in data:
-            data["wait_for_return"] = False
-
         # 含义：尝试用 Pydantic 模型验证数据
         try:
             action = ModelAction(**data)

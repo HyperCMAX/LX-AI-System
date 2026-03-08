@@ -37,11 +37,6 @@ class ModelAction(BaseModel):
     command_params: Optional[Dict[str, Any]] = Field(default_factory=dict, description="命令参数")
     # 含义：如果是提议新命令，此处存放新命令的定义
     proposed_command: Optional[CommandDefinition] = Field(None, description="提议的新命令")
-    # =============================================================
-    # 【关键修复】确保这两个字段存在
-    # =============================================================
-    has_return: bool = Field(default=False, description="该命令是否会产生返回值")
-    wait_for_return: bool = Field(default=False, description="是否需要等待返回值后再回复用户")
 
     # 含义：模型级验证器，在所有字段解析完成后执行
     @model_validator(mode='after')

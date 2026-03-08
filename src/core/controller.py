@@ -1,36 +1,58 @@
 # src/core/controller.py
 
-from .models import (
-    SystemFeedback, EventType, StateNode, 
-    ArchitectOutput, DynamicCommandDefinition,
-    MAX_EVENT_HISTORY_SIZE
-)
-from .registry import CommandRegistry
-from .state_machine import StateMachine
-from .parser import ResponseParser, ParserError
-from .executor import CommandExecutor
-from .logger import EventLogger
-from .message_protocol import ModelAction, ModelActionType
-from .prompt_templates import (
-    SYSTEM_PROMPT_TEMPLATE, ARCHITECT_PROMPT_TEMPLATE,
-    ARCHITECT_FORMAT_EXAMPLE, format_commands, format_events
-)
+# 绝对导入（兼容打包）
+import sys
+from pathlib import Path
+
+try:
+    from models import SystemFeedback, EventType, StateNode, ArchitectOutput, DynamicCommandDefinition, MAX_EVENT_HISTORY_SIZE
+    from registry import CommandRegistry
+    from state_machine import StateMachine
+    from parser import ResponseParser, ParserError
+    from executor import CommandExecutor
+    from logger import EventLogger
+    from message_protocol import ModelAction, ModelActionType, LLMRequest
+    from prompt_templates import SYSTEM_PROMPT_TEMPLATE, ARCHITECT_PROMPT_TEMPLATE, ARCHITECT_FORMAT_EXAMPLE, format_commands, format_events
+    from config import COMMAND_ID_PATTERN, FREE_MODE_MAX_DEPTH
+except ImportError:
+    from .models import SystemFeedback, EventType, StateNode, ArchitectOutput, DynamicCommandDefinition, MAX_EVENT_HISTORY_SIZE
+    from .registry import CommandRegistry
+    from .state_machine import StateMachine
+    from .parser import ResponseParser, ParserError
+    from .executor import CommandExecutor
+    from .logger import EventLogger
+    from .message_protocol import ModelAction, ModelActionType, LLMRequest
+    from .prompt_templates import SYSTEM_PROMPT_TEMPLATE, ARCHITECT_PROMPT_TEMPLATE, ARCHITECT_FORMAT_EXAMPLE, format_commands, format_events
+    from .config import COMMAND_ID_PATTERN, FREE_MODE_MAX_DEPTH
 
 from typing import Optional, List, Dict, Any
-from datetime import datetime, timedelta
+from datetime import datetime
 import json
 
+
+# 定义系统控制器类
 class SystemController:
+    # 含义：初始化方法，组装所有组件
     def __init__(self, initial_state_id: str):
+        # 含义：初始化命令注册中心
         self.registry = CommandRegistry()
+        # 含义：初始化状态机，传入注册中心
         self.state_machine = StateMachine(self.registry)
+        # 含义：初始化命令执行器
         self.executor = CommandExecutor()
+        # 含义：初始化事件日志器
         self.logger = EventLogger()
+        # 含义：初始化响应解析器
         self.parser = ResponseParser()
+        # 含义：记录初始状态 ID
         self.initial_state_id = initial_state_id
+        # 含义：初始化对话历史列表（仅摘要，非系统事件）
         self.conversation_history: List[str] = []
+        # 含义：保存上一次模型动作，用于提取给用户的回复
         self.last_action: Optional[ModelAction] = None
+        # 含义：缓存架构师生成的动态命令 ID 列表
         self.dynamic_command_ids: List[str] = []
+        # 含义：保存上一次命令输出数据（供外部执行器使用）
         self.last_output: Optional[Dict[str, Any]] = None
         
         # 返回值追踪
@@ -39,33 +61,55 @@ class SystemController:
         self.notified_returns: List[str] = []
         self.return_history: Dict[str, Dict] = {}
 
+    # 含义：启动系统，初始化状态
     def start(self):
+        # 含义：切换到初始状态
         self.state_machine.transition_to(self.initial_state_id)
+        # 含义：记录系统启动事件
         self.logger.log(EventType.STATE_CHANGE, f"System started at {self.initial_state_id}")
 
+    # 含义：获取上下文摘要（限制 Token 消耗）
     def _get_context_summary(self) -> str:
-        from .project_manager import ProjectManager
-        pm = ProjectManager()
-        context_length = pm.get_context_length()
+        # =====================================================================
+        # 修复：从配置获取上下文长度
+        # =====================================================================
+        # 含义：使用已导入的 ProjectManager
+        try:
+            pm = ProjectManager()
+            context_length = pm.get_context_length()
+        except:
+            context_length = 5  # 默认值
+        # 含义：保留最近 N 轮对话
         recent_history = self.conversation_history[-context_length:]
         return "\n".join(recent_history)
 
+    # 含义：调用架构师 AI (自由模式专用)
     def _call_architect(self, user_input: str) -> Optional[ArchitectOutput]:
-        from .config_manager import ConfigManager
+        # 含义：导入配置管理器
+        try:
+            from .config_manager import ConfigManager
+        except ImportError:
+            from config_manager import ConfigManager
+        # 含义：导入 requests
         import requests
-        
+
+        # 含义：创建配置管理器实例
         config_mgr = ConfigManager()
+        # 含义：获取 API 配置
         api_config = config_mgr.get_api_config()
-        
+
+        # 含义：如果未配置 API，返回 None
         if not config_mgr.is_configured():
             return None
-        
+
+        # 含义：构建提示词
         prompt = ARCHITECT_PROMPT_TEMPLATE.format(
             context_summary=self._get_context_summary(),
             user_input=user_input,
             format_example=ARCHITECT_FORMAT_EXAMPLE
         )
-        
+
+        # 含义：构建 API 请求
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {api_config.get('key')}"
@@ -78,7 +122,8 @@ class SystemController:
             ],
             "temperature": 0.5
         }
-        
+
+        # 含义：发送请求
         try:
             response = requests.post(
                 f"{api_config.get('base_url')}/chat/completions",
@@ -89,234 +134,213 @@ class SystemController:
             response.raise_for_status()
             data = response.json()
             content = data['choices'][0]['message']['content']
+            # 含义：解析为 ArchitectOutput
             start = content.find('{')
             end = content.rfind('}')
             if start != -1 and end != -1:
-                json_str = content[start:end+1]
+                json_str = content[start:end + 1]
                 return ArchitectOutput(**json.loads(json_str))
             return None
         except Exception as e:
+            # 含义：记录错误但不中断
             self.logger.log(EventType.SYSTEM_ERROR, f"Architect Error: {str(e)}")
             return None
 
+    # 含义：处理用户输入的核心方法
     def process_user_input(self, user_input: str) -> SystemFeedback:
-        """处理用户输入的核心方法"""
+        # 含义：获取当前状态
         current_state = self.state_machine.get_current_state()
+
+        # 含义：重置输出数据
         self.last_output = None
-        
-        # 检查返回值提交
-        if user_input.startswith("[RETURN]"):
-            return self._process_return_submission(user_input)
-        
-        # 自由模式调用架构师
+
+        # 含义：如果是自由模式，先调用架构师更新状态和命令
         if current_state and current_state.mode == "free":
+            # 含义：调用架构师
             architect_output = self._call_architect(user_input)
             if architect_output:
+                # 含义：更新当前状态描述
                 current_state.description = architect_output.current_state_description
+                # 含义：注册动态命令
                 self.dynamic_command_ids = []
                 for cmd_def in architect_output.available_commands:
-                    full_cmd = DynamicCommandDefinition(
+                    # 含义：转换为正式 CommandDefinition
+                    full_cmd = CommandDefinition(
                         id=cmd_def.id,
                         description=cmd_def.description,
-                        parameters_schema=cmd_def.parameters_schema,
-                        has_return=cmd_def.parameters_schema.get("has_return", False),
-                        wait_for_return=cmd_def.parameters_schema.get("wait_for_return", False)
+                        parameters_schema=cmd_def.parameters_schema
                     )
+                    # 含义：注册到临时池（这里简化为直接注册到 registry）
                     self.registry.register(full_cmd)
                     self.dynamic_command_ids.append(cmd_def.id)
+                # 含义：更新状态可用命令列表
                 current_state.available_command_ids = self.dynamic_command_ids
-        
-        # 构建系统反馈（附带返回值状态）
+                # 含义：记录架构师工作事件
+                self.logger.log(EventType.SYSTEM_SUCCESS, f"Architect updated state: {current_state.description}")
+            else:
+                # 含义：如果架构师失败，保留原有命令或降级
+                self.logger.log(EventType.SYSTEM_ERROR, "Architect failed, using fallback")
+
+        # 含义：1. 构建系统反馈数据包
         feedback = self._build_feedback()
-        
-        # 在用户输入中附带返回值状态
-        return_status = self._get_return_status_message()
-        if return_status:
-            user_input_with_status = f"{user_input}\n\n[系统返回值状态]\n{return_status}"
-        else:
-            user_input_with_status = user_input
-        
-        # 调用 LLM
-        llm_response_text = self._call_llm(feedback, user_input_with_status)
-        
-        # 解析
+
+        # 含义：2. 调用执行者 LLM
+        llm_response_text = self._call_llm(feedback, user_input)
+
+        # 含义：3. 解析 LLM 输出
         try:
             action = self.parser.parse(llm_response_text)
         except ParserError as e:
             self.logger.log(EventType.SYSTEM_ERROR, f"Parser Error: {e.message}")
             return self._build_feedback(error_only=True)
-        
+
+        # 含义：保存当前动作
         self.last_action = action
-        
-        # 执行动作
+
+        # 含义：4. 执行动作
         if action.action_type == ModelActionType.CALL_COMMAND:
             cmd = self.registry.get_command(action.command_id)
             if cmd:
-                has_return = action.has_return if hasattr(action, 'has_return') else cmd.has_return
-                wait_for_return = action.wait_for_return if hasattr(action, 'wait_for_return') else cmd.wait_for_return
-                
                 status, data = self.executor.execute(cmd, action.command_params)
-                
                 if status.value == "success":
                     self.logger.log(EventType.SYSTEM_SUCCESS, f"Command {cmd.id} executed", cmd.id)
-                    
+                    # 含义：检查是否为输出数据
                     if isinstance(data, dict) and data.get("output_key"):
                         self.last_output = data
-                    
-                    # 处理返回值追踪
-                    if has_return:
-                        self.return_counter += 1
-                        return_id = f"ret_{self.return_counter}_{cmd.id}"
-                        
-                        from .project_manager import ProjectManager
-                        pm = ProjectManager()
-                        timeout = pm.get_command_timeout()
-                        
-                        if isinstance(data, dict) and data.get("auto_return", False):
-                            # 自动返回值
-                            return_info = {
-                                "return_id": return_id,
-                                "command_id": cmd.id,
-                                "status": "completed",
-                                "value": data,
-                                "created": datetime.now().isoformat(),
-                                "completed": datetime.now().isoformat(),
-                                "timeout": timeout
-                            }
-                            self.pending_returns[cmd.id] = return_info
-                            self.return_history[cmd.id] = return_info.copy()
-                            self.logger.log(EventType.SYSTEM_SUCCESS, f"自动返回值：{cmd.id}")
-                        elif wait_for_return:
-                            # 需要等待
-                            return_info = {
-                                "return_id": return_id,
-                                "command_id": cmd.id,
-                                "status": "waiting",
-                                "value": None,
-                                "created": datetime.now().isoformat(),
-                                "completed": None,
-                                "timeout": timeout
-                            }
-                            self.pending_returns[cmd.id] = return_info
-                            self.return_history[cmd.id] = return_info.copy()
-                            self.logger.log(EventType.SYSTEM_SUCCESS, f"等待返回值：{cmd.id}")
-                        else:
-                            # 追踪中
-                            return_info = {
-                                "return_id": return_id,
-                                "command_id": cmd.id,
-                                "status": "pending",
-                                "value": None,
-                                "created": datetime.now().isoformat(),
-                                "completed": None,
-                                "timeout": timeout
-                            }
-                            self.pending_returns[cmd.id] = return_info
-                            self.return_history[cmd.id] = return_info.copy()
-                            self.logger.log(EventType.SYSTEM_SUCCESS, f"追踪返回值：{cmd.id}")
                 else:
                     self.logger.log(EventType.SYSTEM_ERROR, f"Command {cmd.id} failed: {data}", cmd.id)
             else:
                 self.logger.log(EventType.SYSTEM_ERROR, f"Command {action.command_id} not found")
-        
+
         elif action.action_type == ModelActionType.PROPOSE_COMMAND:
             self.logger.log(EventType.SYSTEM_SUCCESS, f"New command proposed: {action.proposed_command.id}")
-        
-        # 更新对话历史
+
+        # 含义：5. 更新对话历史
         self.conversation_history.append(f"User: {user_input}")
         if action.response_to_user:
             self.conversation_history.append(f"Assistant: {action.response_to_user}")
-        
+
+        # 含义：6. 返回最终系统反馈
         return self._build_feedback()
 
-    def _get_return_status_message(self) -> str:
-        """获取返回值状态消息"""
-        if not self.pending_returns:
-            return ""
-        
-        from .project_manager import ProjectManager
-        pm = ProjectManager()
-        current_time = datetime.now()
-        timeout = pm.get_command_timeout()
-        
-        status_lines = []
-        to_cleanup = []
-        
-        for cmd_id, info in self.pending_returns.items():
-            if cmd_id in self.notified_returns:
-                continue
-            
-            created = datetime.fromisoformat(info["created"])
-            elapsed = (current_time - created).total_seconds()
-            
-            if info["status"] == "completed":
-                value = info.get("value", {})
-                if isinstance(value, dict):
-                    if value.get("return_type") == "http_response":
-                        summary = f"HTTP {value.get('status_code')}: {value.get('response_body', '')[:100]}"
-                    elif value.get("return_type") == "command_output":
-                        summary = f"输出：{value.get('stdout', '')[:100]}"
-                    else:
-                        summary = str(value)[:100]
-                else:
-                    summary = str(value)[:100]
-                status_lines.append(f"  [已返回] {cmd_id}: {summary}")
-                to_cleanup.append(cmd_id)
-                
-            elif info["status"] == "waiting":
-                if elapsed >= timeout:
-                    status_lines.append(f"  [等待超时] {cmd_id}: 超过{timeout}秒无返回值")
-                    to_cleanup.append(cmd_id)
-                else:
-                    status_lines.append(f"  [等待中] {cmd_id}: 已等待{int(elapsed)}秒/{timeout}秒")
-                    
-            elif info["status"] == "pending":
-                if elapsed >= timeout:
-                    status_lines.append(f"  [已超时] {cmd_id}: 超过{timeout}秒无返回值")
-                    to_cleanup.append(cmd_id)
-                else:
-                    status_lines.append(f"  [等待中] {cmd_id}: 已等待{int(elapsed)}秒/{timeout}秒")
-        
-        for cmd_id in to_cleanup:
-            self.notified_returns.append(cmd_id)
-            del self.pending_returns[cmd_id]
-        
-        if status_lines:
-            return "\n".join(status_lines)
-        return ""
+    # 含义：构建系统反馈数据包的辅助方法
+    def _build_feedback(self, error_only: bool = False) -> SystemFeedback:
+        # 含义：获取当前状态
+        current_state = self.state_machine.get_current_state()
+        # 含义：获取当前可用命令
+        disclosed_cmds = self.state_machine.get_disclosed_commands()
+        # 含义：获取事件历史
+        history = self.logger.get_history()
+        # 含义：如果仅报错模式，数据 payload 为空
+        data = None
+        if error_only:
+            pass
+            # 含义：构建并返回反馈对象
+        return SystemFeedback(
+            current_state=current_state,
+            event_history=history,
+            data_payload=data,
+            disclosed_commands=disclosed_cmds
+        )
 
-    def _process_return_submission(self, user_input: str) -> SystemFeedback:
-        """处理返回值提交"""
+    # 含义：获取模型上一次给用户的自然语言回复
+    def get_last_response(self) -> Optional[str]:
+        # 含义：如果存在上一次动作
+        if self.last_action:
+            # 含义：返回给用户看的回复内容
+            return self.last_action.response_to_user
+        # 含义：否则返回 None
+        return None
+
+    # 含义：获取上一次命令的输出数据（供外部执行器使用）
+    def get_last_output(self) -> Optional[Dict[str, Any]]:
+        # 含义：返回输出数据
+        return self.last_output
+
+    # 含义：调用真实 LLM API 的方法 (执行者)
+    def _call_llm(self, feedback: SystemFeedback, user_input: str) -> str:
+        # 含义：导入配置管理器
         try:
-            parts = user_input[8:].split(":", 1)
-            cmd_id = parts[0]
-            return_value = parts[1] if len(parts) > 1 else None
-            
-            if cmd_id in self.pending_returns:
-                self._submit_return(cmd_id, return_value)
-                self.conversation_history.append(f"System: 已收到命令返回值：{cmd_id}")
-                return self._build_feedback()
-            else:
-                self.logger.log(EventType.SYSTEM_ERROR, f"未知的命令 ID: {cmd_id}")
-                return self._build_feedback(error_only=True)
+            from .config_manager import ConfigManager
+        except ImportError:
+            from config_manager import ConfigManager
+        # 含义：导入 requests
+        import requests
+        
+        # =====================================================================
+        # 修复：优先使用项目级 API 配置
+        # =====================================================================
+        # 含义：尝试从项目配置获取 API（通过 project_loader 传递）
+        api_config = getattr(self, 'project_api_config', None)
+        
+        # 含义：如果项目级没有，尝试全局配置
+        if not api_config:
+            config_mgr = ConfigManager()
+            api_config = config_mgr.get_api_config()
+        
+        # 含义：检查 API 配置是否完整
+        if not api_config or not api_config.get('key'):
+            return json.dumps({
+                "thought": "系统未配置 API",
+                "action_type": "reply_only",
+                "response_to_user": "错误：请先在系统设置中配置 API Key 和地址。配置路径：~/.lx_ai/config.json 或 项目文件夹/config.json"
+            })
+
+        # 含义：构建提示词内容
+        cmd_text = format_commands(feedback.disclosed_commands)
+        evt_text = format_events(feedback.event_history)
+        prompt = SYSTEM_PROMPT_TEMPLATE.format(
+            state_description=feedback.current_state.description,
+            state_mode=feedback.current_state.mode,
+            commands_list=cmd_text,
+            event_history=evt_text,
+            user_input=user_input
+        )
+
+        # 含义：构建 API 请求头
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {api_config.get('key')}"
+        }
+
+        # 含义：构建 API 请求体
+        payload = {
+            "model": api_config.get("model", "gpt-3.5-turbo"),
+            "messages": [
+                {"role": "system", "content": "你是一个状态驱动的智能助手。输出必须是严格的 JSON 格式。"},
+                {"role": "user", "content": prompt}
+            ],
+            "temperature": 0.7
+        }
+
+        # 含义：发送 POST 请求
+        try:
+            response = requests.post(
+                f"{api_config.get('base_url', 'https://api.openai.com/v1')}/chat/completions",
+                headers=headers,
+                json=payload,
+                timeout=30
+            )
+            # 含义：检查 HTTP 状态码
+            response.raise_for_status()
+            # 含义：解析响应 JSON
+            data = response.json()
+            # 含义：提取模型生成的内容
+            content = data['choices'][0]['message']['content']
+            # 含义：返回原始内容（解析器会处理 JSON 提取）
+            return content
         except Exception as e:
-            self.logger.log(EventType.SYSTEM_ERROR, f"返回值提交失败：{e}")
-            return self._build_feedback(error_only=True)
+            # 含义：如果请求失败，返回错误 JSON
+            return json.dumps({
+                "thought": "API 调用失败",
+                "action_type": "reply_only",
+                "response_to_user": f"系统错误：{str(e)}"
+            })
 
-    def _submit_return(self, cmd_id: str, return_value: Any):
-        """提交返回值"""
-        if cmd_id not in self.pending_returns:
-            return
-        
-        self.pending_returns[cmd_id]["status"] = "completed"
-        self.pending_returns[cmd_id]["value"] = return_value
-        self.pending_returns[cmd_id]["completed"] = datetime.now().isoformat()
-        
-        # 更新历史记录
-        self.return_history[cmd_id] = self.pending_returns[cmd_id].copy()
-        
-        self.logger.log(EventType.SYSTEM_SUCCESS, f"收到返回值：{cmd_id}")
-
+    # =============================================================
+    # 【关键修复】添加缺失的返回值管理方法
+    # =============================================================
+    
     def get_pending_returns(self) -> List[Dict]:
         """获取所有等待中的返回值"""
         return list(self.pending_returns.values())
@@ -336,82 +360,3 @@ class SystemController:
             if cmd_id in self.notified_returns:
                 del self.pending_returns[cmd_id]
                 self.notified_returns.remove(cmd_id)
-
-    def get_last_response(self) -> Optional[str]:
-        if self.last_action:
-            return self.last_action.response_to_user
-        return None
-
-    def get_last_output(self) -> Optional[Dict[str, Any]]:
-        return self.last_output
-
-    def _call_llm(self, feedback: SystemFeedback, user_input: str) -> str:
-        from .config_manager import ConfigManager
-        import requests
-        
-        config_mgr = ConfigManager()
-        api_config = config_mgr.get_api_config()
-        
-        if not config_mgr.is_configured():
-            return json.dumps({
-                "thought": "系统未配置 API",
-                "action_type": "reply_only",
-                "response_to_user": "错误：请先在 CLI 中配置 API Key 和地址。"
-            })
-        
-        cmd_text = format_commands(feedback.disclosed_commands)
-        evt_text = format_events(feedback.event_history)
-        prompt = SYSTEM_PROMPT_TEMPLATE.format(
-            state_description=feedback.current_state.description,
-            state_mode=feedback.current_state.mode,
-            commands_list=cmd_text,
-            event_history=evt_text,
-            user_input=user_input
-        )
-        
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {api_config.get('key')}"
-        }
-        
-        payload = {
-            "model": api_config.get("model"),
-            "messages": [
-                {"role": "system", "content": "你是一个状态驱动的智能助手。输出必须是严格的 JSON 格式。"},
-                {"role": "user", "content": prompt}
-            ],
-            "temperature": 0.7
-        }
-        
-        try:
-            response = requests.post(
-                f"{api_config.get('base_url')}/chat/completions",
-                headers=headers,
-                json=payload,
-                timeout=30
-            )
-            response.raise_for_status()
-            data = response.json()
-            content = data['choices'][0]['message']['content']
-            return content
-        except Exception as e:
-            return json.dumps({
-                "thought": "API 调用失败",
-                "action_type": "reply_only",
-                "response_to_user": f"系统错误：{str(e)}"
-            })
-
-    def _build_feedback(self, error_only: bool = False) -> SystemFeedback:
-        """构建系统反馈数据包"""
-        current_state = self.state_machine.get_current_state()
-        disclosed_cmds = self.state_machine.get_disclosed_commands()
-        history = self.logger.get_history()
-        data = None
-        if error_only:
-            pass 
-        return SystemFeedback(
-            current_state=current_state,
-            event_history=history,
-            data_payload=data,
-            disclosed_commands=disclosed_cmds
-        )

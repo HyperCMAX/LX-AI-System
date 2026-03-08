@@ -68,8 +68,8 @@ class ProjectManager:
         return {
             "last_project": None, 
             "projects": [],
-            "context_length": 5,
-            "command_timeout": 30  # 新增：默认超时 30 秒
+            "context_length": 5,  # 新增：默认上下文长度
+            "command_timeout": 30  # 新增：默认命令超时时间
         }
 
     def _save_global_config(self):
@@ -80,7 +80,7 @@ class ProjectManager:
             print(f"❌ 保存全局配置失败：{e}")
 
     # =============================================================================
-    # 配置相关方法
+    # 上下文长度管理
     # =============================================================================
     
     def get_context_length(self) -> int:
@@ -92,10 +92,10 @@ class ProjectManager:
         self.global_config["context_length"] = length
         self._save_global_config()
 
-    # =============================================================
-    # 【新增】超时配置方法
-    # =============================================================
-
+    # =============================================================================
+    # 命令超时时间管理
+    # =============================================================================
+    
     def get_command_timeout(self) -> int:
         """获取命令超时时间（秒）"""
         return self.global_config.get("command_timeout", 30)
@@ -106,9 +106,9 @@ class ProjectManager:
         self._save_global_config()
 
     # =============================================================================
-    # 对话历史管理（完整修复版）
+    # 对话历史管理
     # =============================================================================
-
+    
     def get_conversations_dir(self, project_path: str) -> Path:
         """获取项目的对话历史目录"""
         path = Path(project_path)
@@ -130,7 +130,6 @@ class ProjectManager:
                     with open(conv_file, 'r', encoding='utf-8') as f:
                         conv_data = json.load(f)
                     
-                    # 含义：计算消息数量（User + Assistant 算一轮）
                     messages = conv_data.get("messages", [])
                     user_count = sum(1 for m in messages if m.get("role") == "user")
                     assistant_count = sum(1 for m in messages if m.get("role") == "assistant")
@@ -141,21 +140,17 @@ class ProjectManager:
                         "created": conv_data.get("created", "Unknown"),
                         "updated": conv_data.get("updated", "Unknown"),
                         "message_count": len(messages),
-                        "user_count": user_count,
-                        "assistant_count": assistant_count,
-                        "round_count": min(user_count, assistant_count),  # 对话轮数
+                        "round_count": min(user_count, assistant_count),  # 新增：对话轮数统计
                         "path": str(conv_file)
                     })
-                except Exception as e:
-                    print(f"⚠️  加载对话失败 {conv_file}: {e}")
+                except:
                     continue
         
-        # 含义：按更新时间排序（最新的在前）
         conversations.sort(key=lambda x: x.get("updated", ""), reverse=True)
         return conversations
 
     def create_conversation(self, project_path: str, name: str = None) -> str:
-        """创建新对话"""
+        """创建新对话 - 返回对话 ID 而非路径"""
         conv_dir = self.get_conversations_dir(project_path)
         
         # 生成对话 ID
@@ -175,6 +170,7 @@ class ProjectManager:
         with open(conv_file, 'w', encoding='utf-8') as f:
             json.dump(conv_data, f, indent=4, ensure_ascii=False)
         
+        # 修复：返回对话 ID 而非路径
         return conv_id
 
     def load_conversation(self, project_path: str, conversation_id: str) -> Dict:
@@ -223,10 +219,9 @@ class ProjectManager:
         return False
 
     def view_conversation(self, project_path: str, conversation_id: str) -> Optional[Dict]:
-        """查看对话内容（新增）"""
+        """查看对话内容"""
         try:
-            conv_data = self.load_conversation(project_path, conversation_id)
-            return conv_data
+            return self.load_conversation(project_path, conversation_id)
         except:
             return None
 
@@ -379,28 +374,19 @@ def example_handler(param1: str, **kwargs) -> str:
         return config
 
     def save_project(self, project_path: str, config: Dict):
-        """保存项目配置"""
         path = Path(project_path)
         if path.is_file():
             path = path.parent
-        
-        # 含义：分离 project.yaml 和 config.json
+
+        # 分离 project.yaml 和 config.json
         project_config = {k: v for k, v in config.items() if k != "api"}
         api_config = {"api": config.get("api", {})}
-        
-        # 修复：确保 states 中的 available_commands 正确
-        for state in project_config.get("states", []):
-            if "available_commands" not in state:
-                state["available_commands"] = []
-            if "available_command_ids" in state:
-                # 修复：统一使用 available_commands
-                state["available_commands"] = state.pop("available_command_ids")
-        
-        # 含义：保存 project.yaml
+
+        # 保存 project.yaml
         project_config["project"]["updated"] = datetime.now().isoformat()
         with open(path / "project.yaml", 'w', encoding='utf-8') as f:
             yaml.dump(project_config, f, allow_unicode=True, default_flow_style=False)
-        
+
         # =====================================================================
         # 保存项目级 config.json（API 配置在项目文件夹内）✅
         # =====================================================================
