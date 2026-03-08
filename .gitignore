@@ -26,7 +26,7 @@ Thumbs.db
 
 # 构建输出
 build/
-dist/
+# dist/  # 注释掉以允许上传可执行文件
 *.egg-info/
 
 # cx_Freeze打包文件
