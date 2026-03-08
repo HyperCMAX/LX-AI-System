@@ -7,7 +7,10 @@ from enum import Enum
 from typing import Optional, List, Any, Dict
 from pydantic import BaseModel, Field, field_validator, model_validator
 # 含义：确保从 config 导入模式
-from .config import COMMAND_ID_PATTERN, FREE_MODE_MAX_DEPTH, MAX_EVENT_HISTORY_SIZE
+try:
+    from .config import COMMAND_ID_PATTERN, FREE_MODE_MAX_DEPTH, MAX_EVENT_HISTORY_SIZE
+except ImportError:
+    from config import COMMAND_ID_PATTERN, FREE_MODE_MAX_DEPTH, MAX_EVENT_HISTORY_SIZE
 
 # 定义命令执行后的返回值类型枚举
 class ReturnStatus(str, Enum):

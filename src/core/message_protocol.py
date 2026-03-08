@@ -7,7 +7,10 @@ from pydantic import model_validator
 # 导入 typing 模块用于类型提示
 from typing import Optional, Dict, Any, List
 # 导入之前定义的命令模型
-from .models import CommandDefinition
+try:
+    from .models import CommandDefinition
+except ImportError:
+    from models import CommandDefinition
 # 导入 Enum 用于定义枚举
 from enum import Enum
 

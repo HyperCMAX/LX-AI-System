@@ -3,9 +3,15 @@
 # 导入 typing 模块用于类型提示
 from typing import Dict, List, Optional, Any
 # 导入之前定义的命令模型
-from .models import CommandDefinition
+try:
+    from .models import CommandDefinition
+except ImportError:
+    from models import CommandDefinition
 # 导入配置中的正则 pattern
-from .config import COMMAND_ID_PATTERN
+try:
+    from .config import COMMAND_ID_PATTERN
+except ImportError:
+    from config import COMMAND_ID_PATTERN
 # 导入 re 模块用于正则匹配
 import re
 

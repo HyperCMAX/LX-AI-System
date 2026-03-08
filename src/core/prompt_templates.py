@@ -13,12 +13,29 @@ SYSTEM_PROMPT_TEMPLATE = """
 【系统事件历史】
 {event_history}
 
-【指令】
-1. 你必须根据当前状态和可用命令响应用户。
-2. 输出必须是严格的 JSON 格式，包含 thought, action_type, response_to_user, command_id 等字段。
-3. 如果当前是自由模式，你可以提议新命令 (action_type: propose_command)。
-4. 如果命令执行需要参数，请在 command_params 中提供。
-5. 不要输出任何 JSON 之外的文本。
+【重要指令】
+1. 你必须输出严格的 JSON 格式，不要包含任何 Markdown 或其他文本
+2. action_type 必须是以下三个值之一：'reply_only', 'call_command', 'propose_command'
+3. 如果只需要回复用户，使用 action_type: "reply_only"
+4. 如果需要执行命令，使用 action_type: "call_command" 并提供 command_id
+5. 如果在自由模式想提议新命令，使用 action_type: "propose_command"
+
+【输出格式示例】
+{{
+    "thought": "你的思考过程",
+    "action_type": "reply_only",
+    "response_to_user": "给用户的回复"
+}}
+
+或
+
+{{
+    "thought": "你的思考过程",
+    "action_type": "call_command",
+    "response_to_user": "给用户的回复",
+    "command_id": "命令 ID",
+    "command_params": {{"参数名": "参数值"}}
+}}
 
 【用户输入】
 {user_input}

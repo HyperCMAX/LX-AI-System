@@ -1,11 +1,20 @@
 # src/core/state_machine.py
 
 # 导入之前定义的状态模型
-from .models import StateNode
+try:
+    from .models import StateNode
+except ImportError:
+    from models import StateNode
 # 导入命令注册中心
-from .registry import CommandRegistry
+try:
+    from .registry import CommandRegistry
+except ImportError:
+    from registry import CommandRegistry
 # 导入配置常量
-from .config import FREE_MODE_MAX_DEPTH
+try:
+    from .config import FREE_MODE_MAX_DEPTH
+except ImportError:
+    from config import FREE_MODE_MAX_DEPTH
 # 导入 typing 模块
 from typing import Optional, List, Dict
 

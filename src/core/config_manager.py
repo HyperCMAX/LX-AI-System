@@ -13,10 +13,17 @@ from typing import Optional, Dict
 class ConfigManager:
     # 含义：初始化方法，确定配置文件路径
     def __init__(self, config_file: str = "config.json"):
-        # 含义：获取当前脚本所在的目录路径
-        base_dir = Path(__file__).parent.parent
+        # =====================================================================
+        # 修复：使用用户主目录的 .lx_ai 配置目录
+        # =====================================================================
+        # 含义：获取用户主目录
+        home_dir = Path.home()
+        # 含义：构建 .lx_ai 配置目录路径
+        self.lx_ai_dir = home_dir / ".lx_ai"
+        # 含义：确保配置目录存在
+        self.lx_ai_dir.mkdir(parents=True, exist_ok=True)
         # 含义：构建配置文件的完整绝对路径
-        self.config_path = base_dir / config_file
+        self.config_path = self.lx_ai_dir / config_file
         # 含义：初始化配置数据字典
         self.config: Dict = {}
         # 含义：加载现有配置

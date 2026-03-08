@@ -1,11 +1,11 @@
 # src/core/project_manager.py
 
+import sys
 import yaml
 import json
 from pathlib import Path
 from datetime import datetime
 from typing import Optional, List, Dict, Any
-import sys
 
 
 class ProjectManager:
@@ -65,7 +65,11 @@ class ProjectManager:
         return self._get_default_global_config()
 
     def _get_default_global_config(self) -> Dict:
-        return {"last_project": None, "projects": []}
+        return {
+            "last_project": None, 
+            "projects": [],
+            "context_length": 5  # 新增：默认上下文长度
+        }
 
     def _save_global_config(self):
         try:
@@ -73,6 +77,126 @@ class ProjectManager:
                 json.dump(self.global_config, f, indent=4, ensure_ascii=False)
         except Exception as e:
             print(f"❌ 保存全局配置失败：{e}")
+
+    # =============================================================================
+    # 新增：上下文长度管理
+    # =============================================================================
+    
+    def get_context_length(self) -> int:
+        """获取全局上下文长度设置"""
+        return self.global_config.get("context_length", 5)
+
+    def set_context_length(self, length: int):
+        """设置全局上下文长度"""
+        self.global_config["context_length"] = length
+        self._save_global_config()
+
+    # =============================================================================
+    # 新增：对话历史管理
+    # =============================================================================
+    
+    def get_conversations_dir(self, project_path: str) -> Path:
+        """获取项目的对话历史目录"""
+        path = Path(project_path)
+        if path.is_file():
+            path = path.parent
+        conv_dir = path / "conversations"
+        # 含义：确保目录存在
+        conv_dir.mkdir(exist_ok=True)
+        return conv_dir
+
+    def list_conversations(self, project_path: str) -> List[Dict]:
+        """列出项目的所有对话历史"""
+        conv_dir = self.get_conversations_dir(project_path)
+        conversations = []
+        
+        if conv_dir.exists():
+            for conv_file in conv_dir.glob("*.json"):
+                try:
+                    with open(conv_file, 'r', encoding='utf-8') as f:
+                        conv_data = json.load(f)
+                    conversations.append({
+                        "id": conv_file.stem,
+                        "name": conv_data.get("name", conv_file.stem),
+                        "created": conv_data.get("created", "Unknown"),
+                        "updated": conv_data.get("updated", "Unknown"),
+                        "message_count": len(conv_data.get("messages", [])),
+                        "path": str(conv_file)  # 新增：存储完整路径
+                    })
+                except:
+                    continue
+        
+        conversations.sort(key=lambda x: x.get("updated", ""), reverse=True)
+        return conversations
+
+    def create_conversation(self, project_path: str, name: str = None) -> str:
+        """创建新对话 - 返回对话 ID 而非路径"""
+        conv_dir = self.get_conversations_dir(project_path)
+        
+        # 生成对话 ID
+        conv_id = datetime.now().strftime("%Y%m%d_%H%M%S")
+        conv_file = conv_dir / f"{conv_id}.json"
+        
+        # 创建对话文件
+        conv_data = {
+            "id": conv_id,
+            "name": name or f"对话 {conv_id}",
+            "created": datetime.now().isoformat(),
+            "updated": datetime.now().isoformat(),
+            "messages": [],
+            "context_length": self.get_context_length()
+        }
+        
+        with open(conv_file, 'w', encoding='utf-8') as f:
+            json.dump(conv_data, f, indent=4, ensure_ascii=False)
+        
+        # 修复：返回对话 ID 而非路径
+        return conv_id
+
+    def load_conversation(self, project_path: str, conversation_id: str) -> Dict:
+        """加载对话历史"""
+        conv_dir = self.get_conversations_dir(project_path)
+        conv_file = conv_dir / f"{conversation_id}.json"
+        
+        if not conv_file.exists():
+            raise FileNotFoundError(f"对话不存在：{conversation_id}")
+        
+        with open(conv_file, 'r', encoding='utf-8') as f:
+            return json.load(f)
+
+    def save_conversation(self, project_path: str, conversation_id: str, messages: List[Dict]):
+        """保存对话历史"""
+        conv_dir = self.get_conversations_dir(project_path)
+        conv_file = conv_dir / f"{conversation_id}.json"
+        
+        if not conv_file.exists():
+            conv_data = {
+                "id": conversation_id,
+                "name": f"对话 {conversation_id}",
+                "created": datetime.now().isoformat(),
+                "updated": datetime.now().isoformat(),
+                "messages": messages,
+                "context_length": self.get_context_length()
+            }
+        else:
+            with open(conv_file, 'r', encoding='utf-8') as f:
+                conv_data = json.load(f)
+            conv_data["messages"] = messages
+            conv_data["updated"] = datetime.now().isoformat()
+            conv_data["context_length"] = self.get_context_length()
+        
+        with open(conv_file, 'w', encoding='utf-8') as f:
+            json.dump(conv_data, f, indent=4, ensure_ascii=False)
+
+    def delete_conversation(self, project_path: str, conversation_id: str) -> bool:
+        """删除对话历史"""
+        conv_dir = self.get_conversations_dir(project_path)
+        conv_file = conv_dir / f"{conversation_id}.json"
+        
+        if conv_file.exists():
+            conv_file.unlink()
+            return True
+        return False
 
     def list_projects(self) -> List[Dict]:
         projects = []

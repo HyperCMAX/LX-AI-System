@@ -1,7 +1,10 @@
 # src/core/executor.py
 
 # 导入之前定义的命令模型
-from .models import CommandDefinition, ReturnStatus
+try:
+    from .models import CommandDefinition, ReturnStatus
+except ImportError:
+    from models import CommandDefinition, ReturnStatus
 # 导入 typing 模块用于类型提示
 from typing import Any, Dict, Tuple
 

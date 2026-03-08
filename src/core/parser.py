@@ -3,7 +3,10 @@
 # 导入 json 模块用于解析字符串
 import json
 # 导入之前定义的消息协议模型
-from .message_protocol import ModelAction
+try:
+    from .message_protocol import ModelAction
+except ImportError:
+    from message_protocol import ModelAction
 # 导入 Pydantic 验证异常
 from pydantic import ValidationError
 
@@ -31,6 +34,29 @@ class ResponseParser:
         except json.JSONDecodeError as e:
             # 含义：如果 JSON 格式错误，抛出自定义解析错误
             raise ParserError(f"Invalid JSON format: {str(e)}")
+
+        # =====================================================================
+        # 修复：标准化 action_type 值
+        # =====================================================================
+        if "action_type" in data:
+            action_type = data["action_type"]
+            # 含义：映射常见变体到标准值
+            action_type_mapping = {
+                "reply_only": "reply_only",
+                "reply": "reply_only",
+                "回复": "reply_only",
+                "仅回复": "reply_only",
+                "call_command": "call_command",
+                "call": "call_command",
+                "命令": "call_command",
+                "调用命令": "call_command",
+                "propose_command": "propose_command",
+                "propose": "propose_command",
+                "提议": "propose_command",
+                "新命令": "propose_command",
+            }
+            # 含义：标准化 action_type
+            data["action_type"] = action_type_mapping.get(action_type, action_type)
 
         # 含义：尝试用 Pydantic 模型验证数据
         try:

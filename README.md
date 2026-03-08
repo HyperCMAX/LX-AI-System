@@ -1,9 +1,9 @@
 # LX-AI 系统 - 完整文件目录与技术文档
 
-**版本**: 1.1  
+**版本**: 1.2  
 **作者**: ArXav (eurexon@outlook.com)  
 **许可证**: MIT License  
-**分发方式**: 源代码分发 (无预编译安装包)
+**分发方式**: 源代码分发 / 可执行文件分发
 
 ---
 
@@ -20,15 +20,41 @@
 | **双对象交互** | 面向用户（自然语言）+ 面向系统（结构化命令） |
 | **项目制管理** | 每个项目独立配置，支持自定义路径与插件 |
 | **交互式 CLI** | 用户友好的命令行界面，无缝交互体验 |
-| **数据持久化** | 稳健的本地对话历史与配置存储 |
+| **对话历史管理** | 💬 完整的对话历史保存与加载，支持多对话切换 |
+| **多窗口运行** | 🪟 支持同时打开多个对话窗口，并行处理任务 |
+| **上下文控制** | 📏 可配置的上下文长度（1-50 轮），平衡效果与成本 |
+| **打包分发** | 📦 支持打包为独立可执行文件，无需 Python 环境 |
 
 ---
 
 ## 🚀 快速开始
 
-本项目目前以**源代码形式**分发，用户需配置 Python 环境后运行。
+本项目提供**源代码**和**可执行文件**两种分发方式。
 
-### 1. 环境要求
+### 方式一：使用可执行文件（推荐）
+
+#### macOS
+```
+# 下载后直接运行
+./LX_AI
+```
+
+#### Windows
+``cmd
+# 双击 LX_AI.exe 或在命令行运行
+LX_AI.exe
+```
+
+#### Linux
+```bash
+# 赋予执行权限后运行
+chmod +x LX_AI
+./LX_AI
+```
+
+### 方式二：源代码运行
+
+#### 1. 环境要求
 
 确保已安装 **Python 3.9+**。
 
@@ -36,7 +62,7 @@
 python3 --version
 ```
 
-### 2. 安装依赖
+#### 2. 安装依赖
 
 克隆仓库后，在项目根目录安装所需依赖：
 
@@ -44,7 +70,7 @@ python3 --version
 pip install -r requirements.txt
 ```
 
-### 3. 运行程序
+#### 3. 运行程序
 
 进入 `src` 目录并启动 CLI 主程序：
 
@@ -55,42 +81,141 @@ python3 cli.py
 
 *注：程序启动后进入菜单界面，选择"❌ 退出"可关闭程序。*
 
-### 4. 初始配置
+### 初始配置
 
-1.  **配置全局 API**: 在主菜单选择 `⚙️ 系统设置` → `全局 API 配置`，输入 API Key、Base URL 和模型名称。
-2.  **新建项目**: 在主菜单选择 `➕ 新建项目`，输入项目名称并选择保存位置。
-3.  **运行项目**: 打开项目后，选择 `▶️ 当前窗口运行` 开始交互。
+1.  **配置全局 API**: 在主菜单选择 `⚙️ 系统设置` → `🔑 全局 API 配置`，输入 API Key、Base URL 和模型名称。
+2.  **新建项目**: 在主菜单选择 `📁 打开项目` → `➕ 新建项目`，输入项目名称并选择保存位置。
+3.  **运行项目**: 打开项目后，选择 `💬 对话管理` → `➕ 新建对话`，然后选择打开方式（当前窗口/新窗口）。
+
+---
+
+## 💡 新增功能（v1.2）
+
+### 1. 对话历史管理 💬
+
+**功能说明**：
+- ✅ 自动保存对话历史到本地 JSON 文件
+- ✅ 支持多个项目独立管理对话
+- ✅ 支持多个对话随时切换
+- ✅ 显示对话消息数量和更新时间
+
+**使用方法**：
+```bash
+# 在项目中选择"💬 对话管理"
+# - 新建对话：输入对话名称（可选），选择打开方式
+# - 打开对话：从列表选择已有对话
+# - 删除对话：选择不需要的对话并确认
+```
+
+**存储位置**：
+```
+projects/
+└── 项目名/
+    └── conversations/
+        ├── 20240308_123456.json    # 对话 1
+        ├── 20240308_134527.json    # 对话 2
+        └── ...
+```
+
+### 2. 多窗口并行运行 🪟
+
+**功能说明**：
+- ✅ 支持同时打开多个对话窗口
+- ✅ 每个窗口独立运行，互不干扰
+- ✅ 适合多任务并行处理场景
+
+**使用方法**：
+1. 在对话管理中创建或选择对话
+2. 选择"🪟 新窗口打开"
+3. 系统自动在新 Terminal 窗口启动对话
+4. 原窗口可继续操作其他项目或对话
+
+**技术实现**：
+- macOS: 使用 AppleScript 控制 Terminal
+- Windows: 使用 `start` 命令创建新进程组
+- Linux: 手动打开多个终端
+
+### 3. 上下文长度控制 📏
+
+**功能说明**：
+- ✅ 可配置保留最近 N 轮对话（1-50 轮）
+- ✅ 平衡对话质量与 API Token 消耗
+- ✅ 全局统一配置，所有项目共享
+
+**配置方法**：
+```bash
+# 在主菜单选择：
+⚙️ 系统设置 → 📏 上下文长度 → 输入数值（如 10）
+```
+
+**推荐设置**：
+- 简单问答：3-5 轮
+- 复杂任务：10-20 轮
+- 深度研究：30-50 轮
+
+### 4. 打包优化与分发 📦
+
+**改进内容**：
+- ✅ 完全移除相对导入问题
+- ✅ 自动包含所有核心模块
+- ✅ 支持跨平台打包（macOS/Windows/Linux）
+- ✅ 生成的可执行文件无需 Python 环境
+
+**打包步骤**：
+```bash
+# 1. 清理旧文件
+rm -rf build dist
+
+# 2. 执行打包
+python3 build.py
+
+# 3. 验证产物
+ls -lh dist/LX_AI
+```
+
+**分发包内容**：
+```
+dist/
+├── LX_AI              # macOS 可执行文件
+├── LX_AI.exe          # Windows 可执行文件
+└── api_config.json.template  # API 配置模板
+```
 
 ---
 
 ## 📁 完整文件目录结构
 
-```text
+```
 LX/
-├── README.md                         # 项目说明
+├── README.md                         # 项目说明文档
 ├── setup.py                          # Python 包安装脚本
-├── publish/                          # 发布目录
-│   ├── INSTALL.md                    # 安装说明
-│   ├── LX_AI                         # 可执行文件
-│   └── README.md                     # 发布版说明
-└── src/                              # 源代码目录
-    ├── cli.py                        # 主程序入口（CLI 界面）
-    ├── core/                         # 核心模块
-    │   ├── command_handlers.py       # 命令处理器
-    │   ├── config_manager.py         # 配置管理器
-    │   ├── config.py                 # 系统配置常量
-    │   ├── controller.py             # 系统控制器
-    │   ├── executor.py               # 命令执行器
-    │   ├── logger.py                 # 事件日志器
-    │   ├── message_protocol.py       # 通讯协议定义
-    │   ├── models.py                 # 数据模型定义
-    │   ├── parser.py                 # 响应解析器
-    │   ├── project_loader.py         # 项目加载器
-    │   ├── project_manager.py        # 项目管理器
-    │   ├── prompt_templates.py       # 提示词模板
-    │   ├── registry.py               # 命令注册中心
-    │   └── state_machine.py          # 状态机管理
-    └── projects/                     # 项目存储目录
+├── build.py                          # PyInstaller 打包脚本
+├── lx_ai.spec                        # PyInstaller 配置文件
+├── .gitignore                        # Git 忽略配置
+│
+├── src/                              # 源代码目录
+│   ├── cli.py                        # 主程序入口（CLI 界面）
+│   ├── core/                         # 核心模块
+│   │   ├── command_handlers.py       # 命令处理器
+│   │   ├── config_manager.py         # 配置管理器
+│   │   ├── config.py                 # 系统配置常量
+│   │   ├── controller.py             # 系统控制器
+│   │   ├── executor.py               # 命令执行器
+│   │   ├── logger.py                 # 事件日志器
+│   │   ├── message_protocol.py       # 通讯协议定义
+│   │   ├── models.py                 # 数据模型定义
+│   │   ├── parser.py                 # 响应解析器
+│   │   ├── project_loader.py         # 项目加载器
+│   │   ├── project_manager.py        # 项目管理器（含对话管理）
+│   │   ├── prompt_templates.py       # 提示词模板
+│   │   ├── registry.py               # 命令注册中心
+│   │   └── state_machine.py          # 状态机管理
+│   └── projects/                     # 项目存储目录（含对话历史）
+│
+└── dist/                             # 打包产物目录
+    ├── LX_AI                         # macOS 可执行文件
+    ├── LX_AI.exe                     # Windows 可执行文件
+    └── api_config.json.template      # API 配置模板
 ```
 
 ---
@@ -264,21 +389,50 @@ states:
 
 | 命令 | 说明 | 示例 |
 | :--- | :--- | :--- |
-| `python3 cli.py` | 启动主菜单 | `cd src && python3 cli.py` |
-| `python3 cli.py main` | 启动主菜单 | `cd src && python3 cli.py main` |
+| `./LX_AI` | 运行打包后的可执行文件 | `./dist/LX_AI` |
+| `python3 cli.py` | 启动主菜单（源码模式） | `cd src && python3 cli.py` |
 | `python3 cli.py run-single <path>` | 单窗口运行项目 | `python3 cli.py run-single ./projects/demo` |
+| `python3 cli.py run-single <path> <conv_id>` | 打开指定对话 | `python3 cli.py run-single ./projects/demo 20240308_123456` |
 
 ### 主菜单功能
 *   📁 **打开项目**: 列表选择或手动输入路径
-*   ➕ **新建项目**: 默认目录或自定义路径
-*   ⚙️ **系统设置**: 全局 API 配置 / 项目目录设置
+*   ⚙️ **系统设置**: 
+    - 🔑 全局 API 配置（Key/URL/Model）
+    - 📏 上下文长度设置（1-50 轮）
 *   ❌ **退出**: 关闭应用程序
 
 ### 项目内功能
-*   ▶️ **运行**: 当前窗口运行 / 新窗口运行
-*   📝 **命令管理**: 添加 / 编辑 / 删除
+*   💬 **对话管理**: 
+    - ➕ 新建对话（支持自定义名称）
+    - 🗑️ 删除对话
+    - 🪟 新窗口打开 / ▶️ 当前窗口打开
+*   📝 **命令管理**: 添加 / 编辑 / 删除命令
 *   🗂️ **状态编排**: 添加 / 编辑 / 命令绑定 / 跳转配置
 *   ⚙️ **项目配置**: API 配置 / 模型配置 / 项目信息
+
+### 对话管理操作流程
+
+```bash
+# 1. 打开项目后进入对话管理
+💬 对话管理
+
+# 2. 新建对话
+➕ 新建对话 → 输入对话名称（可选）→ 选择打开方式：
+   - 🪟 新窗口打开（并行处理多任务）
+   - ▶️ 当前窗口打开（单任务）
+   - ❌ 暂不打开（稍后处理）
+
+# 3. 打开已有对话
+选择对话 → 选择打开方式：
+   - 🪟 新窗口打开
+   - ▶️ 当前窗口打开
+
+# 4. 删除对话
+🗑️ 删除对话 → 选择对话 → 确认删除
+
+# 5. 退出对话
+输入 "exit" 或 "quit" → 自动保存对话历史
+```
 
 ---
 
@@ -324,28 +478,130 @@ states:
 | **Missing command** | 检查 `cli.py` 是否有 `@app.callback` 装饰器 |
 | **JSON 解析错误** | 删除 `config.json` 和 `api_config.json` 后重启 |
 | **命令 ID 验证失败** | 确保 ID 以小写字母开头，只含字母数字下划线 |
-| **新窗口无法打开** | macOS 需允许 Terminal 的 AppleScript 权限 |
+| **新窗口无法打开** | macOS 需允许 Terminal 的 AppleScript 权限（系统偏好设置 → 安全性与隐私 → 隐私 → AppleScript） |
 | **API 调用失败** | 检查 `api_config.json` 中 Key 和 URL 是否正确 |
 | **程序启动后无响应** | 正常现象，程序已进入菜单界面等待用户选择 |
 | **依赖安装失败** | 确保使用的是 Python 3.9+ 版本，并尝试 `pip install --upgrade pip` |
+| **对话加载失败** | 检查 `projects/项目名/conversations/` 目录下对话文件是否存在 |
+| **打包后导入错误** | 确保使用最新版的 `lx_ai.spec` 配置文件，并已执行 `rm -rf build dist` 清理缓存 |
+| **上下文长度不生效** | 在系统设置中修改后需重启程序，或手动编辑 `~/.lx_ai/config.json` |
+
+---
+
+## 🔄 版本历史
+
+### v1.2 (2024-03) - 新增功能
+- ✅ **对话历史管理**: 完整的对话保存、加载、删除功能
+- ✅ **多窗口并行运行**: 支持同时打开多个对话窗口
+- ✅ **上下文长度控制**: 可配置保留最近 N 轮对话（1-50 轮）
+- ✅ **打包优化**: 完全移除相对导入问题，支持跨平台分发
+- ✅ **run-single 子命令**: 支持命令行直接打开指定项目和对话
+- ✅ **GUI 改进**: 优化对话管理界面，添加打开方式选择
+
+### v1.1 (2024-02) - 初始发布
+- ✅ 状态驱动架构实现
+- ✅ 双模式支持（稳定/自由）
+- ✅ 项目制管理
+- ✅ CLI 交互式界面
+- ✅ 命令处理器系统
+- ✅ LLM 集成（架构师 + 执行者双模型）
 
 ---
 
 ## 📄 依赖说明
 
 **requirements.txt**:
-```text
+```
 typer>=0.9.0
 questionary>=2.0.0
 pyyaml>=6.0
 rich>=13.0.0
 requests>=2.31.0
 pydantic>=2.0.0
+PyInstaller>=6.0.0  # 打包工具（可选，仅开发者需要）
 ```
 
 **安装**:
-```bash
+```
+# 基础运行环境
 pip install -r requirements.txt
+
+# 或包含打包工具
+pip install typer questionary pyyaml rich requests pydantic pyinstaller
+```
+
+---
+
+## 🛠️ 开发者指南
+
+### 本地开发
+
+```bash
+# 1. 克隆仓库
+git clone https://github.com/ArXav/LX-AI-System.git
+cd LX-AI-System
+
+# 2. 创建虚拟环境（推荐）
+python3 -m venv .venv
+source .venv/bin/activate  # macOS/Linux
+.venv\Scripts\activate     # Windows
+
+# 3. 安装依赖
+pip install -r requirements.txt
+
+# 4. 运行程序
+cd src
+python3 cli.py
+```
+
+### 打包发布
+
+```bash
+# 1. 清理敏感数据和缓存
+rm -rf build dist
+find . -name "*.pyc" -delete
+find . -name "__pycache__" -type d -exec rm -rf {} +
+
+# 2. 执行打包
+python3 build.py
+
+# 3. 验证产物
+ls -lh dist/
+./dist/LX_AI --help
+
+# 4. 分发
+# - macOS: dist/LX_AI
+# - Windows: dist/LX_AI.exe
+# - Linux: dist/LX_AI (需测试)
+```
+
+### 添加新功能
+
+#### 添加命令处理器
+
+在 `src/core/command_handlers.py` 中添加：
+
+```python
+class MyCustomHandler(BaseCommandHandler):
+    def execute(self, params: Dict[str, Any]) -> str:
+        # 实现自定义逻辑
+        return "处理结果"
+```
+
+#### 添加系统设置项
+
+在 `cli.py` 的 `settings_menu()` 函数中添加：
+
+```python
+Choice("🎨 新增功能", "new_feature")
+```
+
+然后处理逻辑：
+
+```python
+elif choice == "new_feature":
+    # 实现新功能配置
+    pass
 ```
 
 ---
@@ -354,9 +610,17 @@ pip install -r requirements.txt
 
 ### 贡献指南
 我们欢迎贡献！请遵循标准的开源实践：
-1.  Fork 本仓库
-2.  创建功能分支
-3.  提交包含您更改的 Pull Request
+1. Fork 本仓库
+2. 创建功能分支 (`git checkout -b feature/AmazingFeature`)
+3. 提交您的更改 (`git commit -m 'Add some AmazingFeature'`)
+4. 推送到分支 (`git push origin feature/AmazingFeature`)
+5. 开启 Pull Request
+
+### 代码规范
+- 使用 Python 类型注解
+- 遵循 PEP 8 代码风格
+- 为新增功能编写文档
+- 确保所有测试通过
 
 ### 许可证
 本项目采用 **MIT License** 许可。
@@ -365,3 +629,39 @@ pip install -r requirements.txt
 *   **作者**: ArXav
 *   **邮箱**: eurexon@outlook.com
 *   **仓库**: [https://github.com/ArXav/LX-AI-System.git](https://github.com/ArXav/LX-AI-System.git)
+*   **问题反馈**: 请在 GitHub Issues 中提交
+
+---
+
+## 📊 项目统计
+
+| 指标 | 数值 |
+| :--- | :--- |
+| **核心模块** | 14 个 Python 文件 |
+| **代码行数** | ~2000+ 行 |
+| **支持平台** | macOS / Windows / Linux |
+| **Python 版本** | 3.9+ |
+| **依赖数量** | 6 个核心库 |
+| **打包体积** | ~11MB (macOS ARM64) |
+
+---
+
+## 🎯 路线图
+
+### v1.3 计划（开发中）
+- [ ] Web UI 界面（基于 Gradio/Streamlit）
+- [ ] 数据库支持（SQLite/PostgreSQL）
+- [ ] 插件市场系统
+- [ ] API 服务端模式
+- [ ] Docker 容器化部署
+
+### 未来愿景
+- [ ] 可视化状态编排器
+- [ ] 多模型自动切换
+- [ ] 对话分析与统计
+- [ ] 团队协作功能
+- [ ] 云端同步服务
+
+---
+
+**感谢使用 LX-AI 系统！** 🎉

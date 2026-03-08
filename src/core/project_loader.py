@@ -1,11 +1,19 @@
 # src/core/project_loader.py
 
+import sys
+from pathlib import Path
+
+try:
+    from controller import SystemController
+    from models import StateNode, CommandDefinition
+    from command_handlers import HandlerRegistry
+except ImportError:
+    from .controller import SystemController
+    from .models import StateNode, CommandDefinition
+    from .command_handlers import HandlerRegistry
+
 import yaml
 import json
-from pathlib import Path
-from .controller import SystemController
-from .models import StateNode, CommandDefinition
-from .command_handlers import HandlerRegistry
 
 
 class ProjectLoader:
@@ -74,6 +82,11 @@ class ProjectLoader:
             controller.state_machine.register_state(state)
 
         self._register_transitions(controller)
+
+        # =====================================================================
+        # 修复：将项目级 API 配置传递给控制器
+        # =====================================================================
+        controller.project_api_config = self.config.get("api", {})
 
         initial_state = self.config.get("initial_state", "root")
         controller.start()

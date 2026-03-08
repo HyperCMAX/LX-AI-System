@@ -1,9 +1,15 @@
 # src/core/logger.py
 
 # 导入之前定义的系统事件模型
-from .models import SystemEvent, EventType
+try:
+    from .models import SystemEvent, EventType
+except ImportError:
+    from models import SystemEvent, EventType
 # 导入配置中的最大历史长度
-from .config import MAX_EVENT_HISTORY_SIZE
+try:
+    from .config import MAX_EVENT_HISTORY_SIZE
+except ImportError:
+    from config import MAX_EVENT_HISTORY_SIZE
 # 导入 datetime 用于时间戳
 from datetime import datetime
 # 导入 typing 用于列表类型

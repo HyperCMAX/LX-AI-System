@@ -1,18 +1,31 @@
 # src/core/controller.py
 
-# 导入之前定义的所有核心组件
-from .models import SystemFeedback, EventType, StateNode, ArchitectOutput, DynamicCommandDefinition
-from .registry import CommandRegistry
-from .state_machine import StateMachine
-from .parser import ResponseParser, ParserError
-from .executor import CommandExecutor
-from .logger import EventLogger
-from .message_protocol import ModelAction, ModelActionType, LLMRequest
-from .prompt_templates import SYSTEM_PROMPT_TEMPLATE, ARCHITECT_PROMPT_TEMPLATE, ARCHITECT_FORMAT_EXAMPLE, \
-    format_commands, format_events
-# 导入 typing 用于类型提示
+# 绝对导入（兼容打包）
+import sys
+from pathlib import Path
+
+try:
+    from models import SystemFeedback, EventType, StateNode, ArchitectOutput, DynamicCommandDefinition
+    from registry import CommandRegistry
+    from state_machine import StateMachine
+    from parser import ResponseParser, ParserError
+    from executor import CommandExecutor
+    from logger import EventLogger
+    from message_protocol import ModelAction, ModelActionType, LLMRequest
+    from prompt_templates import SYSTEM_PROMPT_TEMPLATE, ARCHITECT_PROMPT_TEMPLATE, ARCHITECT_FORMAT_EXAMPLE, format_commands, format_events
+    from config import COMMAND_ID_PATTERN, FREE_MODE_MAX_DEPTH, MAX_EVENT_HISTORY_SIZE
+except ImportError:
+    from .models import SystemFeedback, EventType, StateNode, ArchitectOutput, DynamicCommandDefinition
+    from .registry import CommandRegistry
+    from .state_machine import StateMachine
+    from .parser import ResponseParser, ParserError
+    from .executor import CommandExecutor
+    from .logger import EventLogger
+    from .message_protocol import ModelAction, ModelActionType, LLMRequest
+    from .prompt_templates import SYSTEM_PROMPT_TEMPLATE, ARCHITECT_PROMPT_TEMPLATE, ARCHITECT_FORMAT_EXAMPLE, format_commands, format_events
+    from .config import COMMAND_ID_PATTERN, FREE_MODE_MAX_DEPTH, MAX_EVENT_HISTORY_SIZE
+
 from typing import Optional, List, Dict, Any
-# 导入 json 用于解析
 import json
 
 
@@ -50,15 +63,26 @@ class SystemController:
 
     # 含义：获取上下文摘要（限制 Token 消耗）
     def _get_context_summary(self) -> str:
-        # 含义：只保留最近 5 轮对话作为摘要
-        recent_history = self.conversation_history[-5:]
-        # 含义：拼接为字符串
+        # =====================================================================
+        # 修复：从配置获取上下文长度
+        # =====================================================================
+        # 含义：使用已导入的 ProjectManager
+        try:
+            pm = ProjectManager()
+            context_length = pm.get_context_length()
+        except:
+            context_length = 5  # 默认值
+        # 含义：保留最近 N 轮对话
+        recent_history = self.conversation_history[-context_length:]
         return "\n".join(recent_history)
 
     # 含义：调用架构师 AI (自由模式专用)
     def _call_architect(self, user_input: str) -> Optional[ArchitectOutput]:
         # 含义：导入配置管理器
-        from .config_manager import ConfigManager
+        try:
+            from .config_manager import ConfigManager
+        except ImportError:
+            from config_manager import ConfigManager
         # 含义：导入 requests
         import requests
 
@@ -229,21 +253,30 @@ class SystemController:
     # 含义：调用真实 LLM API 的方法 (执行者)
     def _call_llm(self, feedback: SystemFeedback, user_input: str) -> str:
         # 含义：导入配置管理器
-        from .config_manager import ConfigManager
+        try:
+            from .config_manager import ConfigManager
+        except ImportError:
+            from config_manager import ConfigManager
         # 含义：导入 requests
         import requests
-
-        # 含义：创建配置管理器实例
-        config_mgr = ConfigManager()
-        # 含义：获取 API 配置
-        api_config = config_mgr.get_api_config()
-
-        # 含义：如果未配置 API，返回错误提示 JSON
-        if not config_mgr.is_configured():
+        
+        # =====================================================================
+        # 修复：优先使用项目级 API 配置
+        # =====================================================================
+        # 含义：尝试从项目配置获取 API（通过 project_loader 传递）
+        api_config = getattr(self, 'project_api_config', None)
+        
+        # 含义：如果项目级没有，尝试全局配置
+        if not api_config:
+            config_mgr = ConfigManager()
+            api_config = config_mgr.get_api_config()
+        
+        # 含义：检查 API 配置是否完整
+        if not api_config or not api_config.get('key'):
             return json.dumps({
                 "thought": "系统未配置 API",
                 "action_type": "reply_only",
-                "response_to_user": "错误：请先在 CLI 中配置 API Key 和地址。"
+                "response_to_user": "错误：请先在系统设置中配置 API Key 和地址。配置路径：~/.lx_ai/config.json 或 项目文件夹/config.json"
             })
 
         # 含义：构建提示词内容
@@ -265,7 +298,7 @@ class SystemController:
 
         # 含义：构建 API 请求体
         payload = {
-            "model": api_config.get("model"),
+            "model": api_config.get("model", "gpt-3.5-turbo"),
             "messages": [
                 {"role": "system", "content": "你是一个状态驱动的智能助手。输出必须是严格的 JSON 格式。"},
                 {"role": "user", "content": prompt}
@@ -275,9 +308,8 @@ class SystemController:
 
         # 含义：发送 POST 请求
         try:
-            # 含义：调用 API 端点
             response = requests.post(
-                f"{api_config.get('base_url')}/chat/completions",
+                f"{api_config.get('base_url', 'https://api.openai.com/v1')}/chat/completions",
                 headers=headers,
                 json=payload,
                 timeout=30

@@ -1,52 +1,55 @@
+#!/usr/bin/env python3
 # src/cli.py
 
-# 导入 typer 用于构建 CLI
+# =============================================================================
+# 打包环境路径修复（必须放在最前面）
+# =============================================================================
+import sys
+import os
+from pathlib import Path
+
+# 含义：添加当前目录到路径
+current_dir = Path(__file__).parent.absolute()
+if str(current_dir) not in sys.path:
+    sys.path.insert(0, str(current_dir))
+
+# =============================================================================
+# 导入（使用绝对导入）
+# =============================================================================
 import typer
-# 导入 questionary 用于交互式菜单
 import questionary
 from questionary import Choice
-# 导入核心控制器
-from core.controller import SystemController
-# 导入项目管理器
-from core.project_manager import ProjectManager
-# 导入项目加载器
-from core.project_loader import ProjectLoader
-# 导入 Path 用于文件操作
-from pathlib import Path
-# 导入 typing 用于类型提示
 from typing import Dict, Any, Optional, List
-# 导入 json 用于配置
 import json
-# 导入 yaml 用于配置
 import yaml
+from datetime import datetime
 
-# 含义：导入富文本库
+# 含义：富文本导入
 try:
     from rich.console import Console
-    from rich.table import Table
     from rich.panel import Panel
-
     USE_RICH = True
     console = Console()
 except ImportError:
     USE_RICH = False
     console = None
-    Table = None
     Panel = None
 
-# 含义：创建 Typer 应用实例
-app = typer.Typer(help="状态驱动 AI 系统 - 项目管理 CLI")
+# 含义：核心模块导入（绝对路径）
+from core.controller import SystemController
+from core.project_manager import ProjectManager
+from core.project_loader import ProjectLoader
 
 # =============================================================================
-# 【新增】设置默认回调（无子命令时自动执行 main）
+# Typer 应用
 # =============================================================================
+app = typer.Typer(help="状态驱动 AI 系统")
+
 @app.callback(invoke_without_command=True)
 def default_callback(ctx: typer.Context):
-    """默认执行主菜单"""
     if ctx.invoked_subcommand is None:
         main()
 
-# 含义：创建项目管理器实例
 pm = ProjectManager()
 
 
@@ -62,16 +65,13 @@ def main():
             "=== 状态驱动 AI 系统 ===",
             choices=[
                 Choice("📁 打开项目", "open"),
-                Choice("➕ 新建项目", "create"),
                 Choice("⚙️  系统设置", "settings"),
                 Choice("❌ 退出", "exit")
             ]
         ).ask()
-
+        
         if choice == "open":
             open_project_menu()
-        elif choice == "create":
-            create_project_menu()
         elif choice == "settings":
             settings_menu()
         elif choice == "exit" or choice is None:
@@ -84,56 +84,20 @@ def main():
 
 def open_project_menu():
     """打开项目选择菜单"""
-    # 含义：选择打开方式
-    open_method = questionary.select(
-        "打开项目方式",
-        choices=[
-            Choice("📂 从列表选择", "list"),
-            Choice("📝 手动输入路径", "manual"),
-            Choice("🔙 返回", "back")
-        ]
-    ).ask()
-
-    if open_method == "back" or open_method is None:
+    projects = pm.list_projects()
+    if not projects:
+        if USE_RICH and console:
+            console.print("[yellow]⚠️  暂无项目[/yellow]")
+        else:
+            print("⚠️  暂无项目")
         return
-    elif open_method == "list":
-        # 含义：从列表选择
-        projects = pm.list_projects()
-        if not projects:
-            if USE_RICH and console:
-                console.print("[yellow]⚠️  暂无项目，请先新建项目[/yellow]")
-            else:
-                print("⚠️  暂无项目，请先新建项目")
-            return
-
-        choices = []
-        for p in projects:
-            choices.append(Choice(f"📂 {p['name']} ({p['version']})", p['path']))
-        choices.append(Choice("🔙 返回", None))
-
-        selected = questionary.select("选择项目", choices=choices).ask()
-        if selected:
-            project_menu(selected)
-    elif open_method == "manual":
-        # 含义：手动输入路径
-        path = questionary.text("输入项目路径或 project.yaml 文件路径").ask()
-        if path:
-            try:
-                test_path = Path(path)
-                if test_path.is_dir():
-                    config_file = test_path / "project.yaml"
-                    if not config_file.exists():
-                        raise FileNotFoundError("项目目录中未找到 project.yaml")
-                elif test_path.is_file() and test_path.name == "project.yaml":
-                    pass
-                else:
-                    raise FileNotFoundError("无效的项目路径")
-                project_menu(str(test_path))
-            except Exception as e:
-                if USE_RICH and console:
-                    console.print(f"[red]❌ 打开失败：{str(e)}[/red]")
-                else:
-                    print(f"❌ 打开失败：{str(e)}")
+    
+    choices = [Choice(f"📂 {p['name']}", p['path']) for p in projects]
+    choices.append(Choice("🔙 返回", None))
+    
+    selected = questionary.select("选择项目", choices=choices).ask()
+    if selected:
+        project_menu(selected)
 
 
 def create_project_menu():
@@ -173,34 +137,270 @@ def create_project_menu():
 def project_menu(project_path: str):
     """项目内功能菜单"""
     config = pm.open_project(project_path)
-    project_name = config.get("project", {}).get("name", "Unknown")
-
+    name = config.get("project", {}).get("name", "Unknown")
+    
     while True:
         choice = questionary.select(
-            f"=== 项目：{project_name} ===",
+            f"=== 项目：{name} ===",
             choices=[
-                Choice("▶️  当前窗口运行", "run_current"),
-                Choice("🪟 新窗口运行", "run_new_window"),
-                Choice("📝 命令管理", "commands"),
-                Choice("🗂️  状态编排", "states"),
+                Choice("💬 对话管理", "conv"),
+                Choice("📝 命令管理", "cmd"),
+                Choice("🗂️  状态编排", "state"),
                 Choice("⚙️  项目配置", "config"),
-                Choice("🔙 返回主菜单", "back")
+                Choice("🔙 返回", "back")
             ]
         ).ask()
-
-        if choice == "run_current":
-            run_project(project_path, config)
-        elif choice == "run_new_window":
-            run_project_in_new_window(project_path, config)
-        elif choice == "commands":
+        
+        if choice == "conv":
+            conversations_menu(project_path, config)
+        elif choice == "cmd":
             commands_menu(project_path, config)
-        elif choice == "states":
+        elif choice == "state":
             states_menu(project_path, config)
         elif choice == "config":
             project_config_menu(project_path, config)
         elif choice == "back" or choice is None:
             break
 
+
+# =============================================================================
+# 对话管理
+# =============================================================================
+
+def conversations_menu(project_path: str, config: Dict):
+    """对话管理菜单"""
+    while True:
+        convs = pm.list_conversations(project_path)
+        choices = [Choice(f"💬 {c['name']} ({c['message_count']})", c['id']) for c in convs]
+        choices.extend([
+            Choice("➕ 新建对话", "new"),
+            Choice("🗑️  删除对话", "delete"),
+            Choice("🔙 返回", "back")
+        ])
+        
+        choice = questionary.select("对话管理", choices=choices).ask()
+        
+        if choice == "back" or choice is None:
+            break
+        elif choice == "new":
+            name = questionary.text("对话名称（留空自动生成）").ask()
+            conv_id = pm.create_conversation(project_path, name)
+            if USE_RICH and console:
+                console.print("[green]✅ 新对话已创建[/green]")
+            else:
+                print("✅ 新对话已创建")
+            
+            # 询问打开方式
+            open_mode = questionary.select(
+                "打开方式",
+                choices=[
+                    Choice("🪟 新窗口打开", "new_window"),
+                    Choice("▶️  当前窗口打开", "current"),
+                    Choice("❌ 暂不打开", "cancel")
+                ]
+            ).ask()
+            
+            if open_mode == "new_window":
+                run_project_in_new_window(project_path, config, conv_id)
+            elif open_mode == "current":
+                run_project(project_path, config, conv_id)
+                
+        elif choice == "delete":
+            if convs:
+                del_choices = [Choice(f"💬 {c['name']}", c['id']) for c in convs]
+                sel = questionary.select("选择删除", choices=del_choices).ask()
+                if sel and questionary.confirm("确定？").ask():
+                    pm.delete_conversation(project_path, sel)
+                    if USE_RICH and console:
+                        console.print("[green]✅ 已删除[/green]")
+                    else:
+                        print("✅ 已删除")
+        elif choice:
+            # 打开现有对话
+            open_mode = questionary.select(
+                "打开方式",
+                choices=[
+                    Choice("🪟 新窗口打开", "new_window"),
+                    Choice("▶️  当前窗口打开", "current")
+                ]
+            ).ask()
+            
+            if open_mode == "new_window":
+                run_project_in_new_window(project_path, config, choice)
+            elif open_mode == "current":
+                run_project(project_path, config, choice)
+
+
+# =============================================================================
+# 运行项目
+# =============================================================================
+def run_project(project_path: str, config: Dict, conv_id: str = None):
+    """运行项目（支持对话历史）"""
+    api = config.get("api", {})
+    if not api.get("key"):
+        g = pm.get_global_api_config()
+        if g.get("key"):
+            config["api"] = g
+        else:
+            if USE_RICH and console:
+                console.print("[red]❌ 未配置 API[/red]")
+            else:
+                print("❌ 未配置 API")
+            return
+    
+    pm.save_project(project_path, config)
+    
+    try:
+        loader = ProjectLoader(project_path)
+        controller = SystemController(initial_state_id=config.get("initial_state", "root"))
+        
+        if conv_id:
+            data = pm.load_conversation(project_path, conv_id)
+            controller.conversation_history = [f"{m['role']}: {m['content']}" for m in data.get("messages", [])]
+            curr_id = conv_id
+            conv_name = data.get("name", conv_id)
+        else:
+            curr_id = datetime.now().strftime("%Y%m%d_%H%M%S")
+            conv_name = f"对话 {curr_id}"
+        
+        info = loader.apply_to(controller)
+        
+        if USE_RICH and console:
+            if Panel:
+                console.print(Panel(f"[bold blue]{info['project_name']} - {conv_name}[/bold blue]"))
+            else:
+                console.print(f"[bold blue]{info['project_name']} - {conv_name}[/bold blue]")
+            console.print(f"上下文长度：{pm.get_context_length()} 轮")
+        else:
+            print(f"\n=== {info['project_name']} - {conv_name} ===")
+            print(f"上下文长度：{pm.get_context_length()} 轮\n")
+        
+        while True:
+            try:
+                user = typer.prompt("用户")
+                if user.lower() in ["exit", "quit"]:
+                    _save_conv(pm, project_path, curr_id, controller)
+                    break
+                
+                fb = controller.process_user_input(user)
+                ai = controller.get_last_response()
+                
+                if ai:
+                    if USE_RICH and console:
+                        console.print(f"[bold white]AI: {ai}[/bold white]")
+                    else:
+                        print(f"AI: {ai}")
+                
+            except KeyboardInterrupt:
+                _save_conv(pm, project_path, curr_id, controller)
+                break
+            except Exception as e:
+                if USE_RICH and console:
+                    console.print(f"[red]❌ 错误：{e}[/red]")
+                else:
+                    print(f"❌ 错误：{e}")
+    except Exception as e:
+        if USE_RICH and console:
+            console.print(f"[red]❌ 启动失败：{e}[/red]")
+        else:
+            print(f"❌ 启动失败：{e}")
+
+def _save_conv(pm, path, conv_id, controller):
+    """保存对话历史"""
+    msgs = []
+    for m in controller.conversation_history:
+        if m.startswith("User:"):
+            msgs.append({"role": "user", "content": m[5:]})
+        elif m.startswith("Assistant:"):
+            msgs.append({"role": "assistant", "content": m[12:]})
+    pm.save_conversation(path, conv_id, msgs)
+
+
+# =============================================================================
+# 新窗口运行功能
+# =============================================================================
+
+def run_project_in_new_window(project_path: str, config: Dict, conv_id: str = None):
+    """在新终端窗口中运行项目"""
+    import subprocess
+    import sys
+    
+    # 检测是否为打包环境
+    is_packaged = getattr(sys, 'frozen', False)
+    
+    try:
+        if sys.platform == "darwin":  # macOS
+            if is_packaged:
+                # 打包环境
+                exe = sys.executable
+                if conv_id:
+                    script = f'''
+                    tell application "Terminal"
+                        activate
+                        do script "{exe} run-single '{project_path}' '{conv_id}'"
+                    end tell
+                    '''
+                else:
+                    script = f'''
+                    tell application "Terminal"
+                        activate
+                        do script "{exe} run-single '{project_path}'"
+                    end tell
+                    '''
+            else:
+                # 开发环境
+                cli_path = Path(__file__).absolute()
+                if conv_id:
+                    script = f'''
+                    tell application "Terminal"
+                        activate
+                        do script "cd '{cli_path.parent}' && {sys.executable} '{cli_path}' run-single '{project_path}' '{conv_id}'"
+                    end tell
+                    '''
+                else:
+                    script = f'''
+                    tell application "Terminal"
+                        activate
+                        do script "cd '{cli_path.parent}' && {sys.executable} '{cli_path}' run-single '{project_path}'"
+                    end tell
+                    '''
+            subprocess.run(["osascript", "-e", script])
+            if USE_RICH and console:
+                console.print("[green]✅ 已在新窗口中启动[/green]")
+            else:
+                print("✅ 已在新窗口中启动")
+            
+        elif sys.platform == "win32":  # Windows
+            if is_packaged:
+                if conv_id:
+                    cmd = f'start "LX_AI" "{sys.executable}" run-single "{project_path}" "{conv_id}"'
+                else:
+                    cmd = f'start "LX_AI" "{sys.executable}" run-single "{project_path}"'
+            else:
+                cli_path = Path(__file__).absolute()
+                if conv_id:
+                    cmd = f'start "LX_AI" "{sys.executable}" "{cli_path}" run-single "{project_path}" "{conv_id}"'
+                else:
+                    cmd = f'start "LX_AI" "{sys.executable}" "{cli_path}" run-single "{project_path}"'
+            subprocess.Popen(cmd, shell=True)
+            if USE_RICH and console:
+                console.print("[green]✅ 已在新窗口中启动[/green]")
+            else:
+                print("✅ 已在新窗口中启动")
+            
+        else:  # Linux
+            if USE_RICH and console:
+                console.print("[yellow]⚠️  Linux 请使用终端手动运行[/yellow]")
+            else:
+                print("⚠️  Linux 请使用终端手动运行")
+            run_project(project_path, config, conv_id)
+            
+    except Exception as e:
+        if USE_RICH and console:
+            console.print(f"[red]❌ 打开新窗口失败：{e}[/red]")
+        else:
+            print(f"❌ 打开新窗口失败：{e}")
+        run_project(project_path, config, conv_id)
 
 # =============================================================================
 # 命令管理
@@ -565,71 +765,32 @@ def states_menu(project_path: str, config: Dict[str, Any]):
 # =============================================================================
 # 项目配置
 # =============================================================================
-
-def project_config_menu(project_path: str, config: Dict[str, Any]):
+def project_config_menu(project_path: str, config: Dict):
     """项目配置菜单"""
     while True:
         choice = questionary.select(
             "项目配置",
             choices=[
-                Choice("🔑 完整 API 配置", "api_full"),
-                Choice("🏷️  项目信息", "info"),
+                Choice("🔑 API 配置", "api"),
                 Choice("🔙 返回", "back")
             ]
         ).ask()
-
-        if choice == "back" or choice is None:
+        
+        if choice == "back":
             pm.save_project(project_path, config)
             break
-        elif choice == "api_full":
-            # =================================================================
-            # 项目级 API 配置（保存在项目文件夹内的 config.json）✅
-            # =================================================================
+        elif choice == "api":
             if "api" not in config:
                 config["api"] = {}
-
-            current_key = config["api"].get("key", "")
-            api_key = questionary.password(
-                "API Key",
-                default=current_key if current_key else ""
-            ).ask()
-            if api_key:
-                config["api"]["key"] = api_key
-
-            current_url = config["api"].get("base_url", "")
-            base_url = questionary.text(
-                "API Base URL",
-                default=current_url if current_url else "https://api.openai.com/v1"
-            ).ask()
-            config["api"]["base_url"] = base_url
-
-            current_model = config["api"].get("model", "")
-            model = questionary.text(
-                "模型名称",
-                default=current_model if current_model else "gpt-3.5-turbo"
-            ).ask()
-            config["api"]["model"] = model
-
-            # 含义：保存到项目文件夹内的 config.json
+            k = questionary.password("Key", default=config["api"].get("key", "")).ask()
+            u = questionary.text("URL", default=config["api"].get("base_url", "")).ask()
+            m = questionary.text("Model", default=config["api"].get("model", "")).ask()
+            config["api"].update({"key": k, "base_url": u, "model": m})
             pm.save_project(project_path, config)
-
             if USE_RICH and console:
-                console.print("[green]✅ API 配置已保存到项目文件夹[/green]")
-                console.print(f"   路径：{project_path}/config.json")
+                console.print("[green]✅ 已保存[/green]")
             else:
-                print("✅ API 配置已保存到项目文件夹")
-                print(f"   路径：{project_path}/config.json")
-
-        elif choice == "info":
-            config["project"]["name"] = questionary.text(
-                "项目名称", default=config.get("project", {}).get("name", "")
-            ).ask()
-            config["project"]["version"] = questionary.text(
-                "版本号", default=config.get("project", {}).get("version", "")
-            ).ask()
-            pm.save_project(project_path, config)
-            if USE_RICH and console:
-                console.print("[green]✅ 项目信息已保存[/green]")
+                print("✅ 已保存")
 
 # =============================================================================
 # 系统设置
@@ -642,255 +803,59 @@ def settings_menu():
             "系统设置",
             choices=[
                 Choice("🔑 全局 API 配置", "api"),
-                Choice("📂 项目目录设置", "dir"),
-                Choice("📄 查看配置文件", "view_config"),
-                Choice("🔙 返回主菜单", "back")
+                Choice("📏 上下文长度", "context"),
+                Choice("🔙 返回", "back")
             ]
         ).ask()
-
+        
         if choice == "back" or choice is None:
             break
         elif choice == "api":
-            # 获取当前配置
-            current_api = pm.get_global_api_config()
-
-            api_key = questionary.password(
-                "API Key",
-                default=current_api.get("key", "")
-            ).ask()
-
-            base_url = questionary.text(
-                "API Base URL",
-                default=current_api.get("base_url", "https://api.openai.com/v1")
-            ).ask()
-
-            model = questionary.text(
-                "模型名称",
-                default=current_api.get("model", "gpt-3.5-turbo")
-            ).ask()
-
-            if api_key or base_url or model:
-                pm.set_global_api_config(
-                    api_key if api_key else current_api.get("key", ""),
-                    base_url,
-                    model
-                )
-                if USE_RICH and console:
-                    console.print("[green]✅ API 配置已保存到 api_config.json[/green]")
-                else:
-                    print("✅ API 配置已保存到 api_config.json")
-
-        elif choice == "dir":
-            new_path = questionary.text("项目根目录路径").ask()
-            if new_path:
-                pm.projects_root = Path(new_path)
-                if USE_RICH and console:
-                    console.print(f"[green]✅ 项目目录已设置为：{new_path}[/green]")
-                else:
-                    print(f"✅ 项目目录已设置为：{new_path}")
-
-
-        elif choice == "view_config":
-
-            # 显示配置文件路径
-
+            current = pm.get_global_api_config()
+            key = questionary.password("API Key", default=current.get("key", "")).ask()
+            url = questionary.text("Base URL", default=current.get("base_url", "https://api.openai.com/v1")).ask()
+            model = questionary.text("Model", default=current.get("model", "gpt-3.5-turbo")).ask()
+            pm.set_global_api_config(key or current.get("key", ""), url, model)
             if USE_RICH and console:
-
-                console.print("\n[bold]配置文件位置：[/bold]")
-
-                console.print(f"  全局 API 配置：[cyan]{pm.api_config_path}[/cyan]")
-
-                console.print(f"  全局配置：[cyan]{pm.global_config_path}[/cyan]")
-
-                console.print(f"  配置目录：[cyan]{pm.get_config_dir()}[/cyan]")
-
-                console.print(f"  项目目录：[cyan]{pm.projects_root}[/cyan]")
-
+                console.print("[green]✅ API 配置已保存[/green]")
             else:
-
-                print("\n配置文件位置：")
-
-                print(f"  全局 API 配置：{pm.api_config_path}")
-
-                print(f"  全局配置：{pm.global_config_path}")
-
-                print(f"  配置目录：{pm.get_config_dir()}")
-
-                print(f"  项目目录：{pm.projects_root}")
+                print("✅ API 配置已保存")
+        elif choice == "context":
+            current = pm.get_context_length()
+            new = questionary.text("上下文长度 (1-50)", default=str(current)).ask()
+            try:
+                pm.set_context_length(max(1, min(50, int(new))))
+                if USE_RICH and console:
+                    console.print(f"[green]✅ 上下文长度已设置为 {new}[/green]")
+                else:
+                    print(f"✅ 上下文长度已设置为 {new}")
+            except:
+                if USE_RICH and console:
+                    console.print("[red]❌ 请输入有效数字[/red]")
+                else:
+                    print("❌ 请输入有效数字")
 
 # =============================================================================
 # 新窗口运行功能
 # =============================================================================
 
-def run_project_in_new_window(project_path: str, config: Dict[str, Any]):
-    """在新终端窗口中运行项目"""
-    import subprocess
-    import sys
-    import os
-
-    # 含义：获取项目信息
-    project_name = config.get("project", {}).get("name", "Unknown")
-
-    # 含义：构建运行命令
-    cli_path = Path(__file__).absolute()
-    run_command = [
-        sys.executable,
-        str(cli_path),
-        "run-single",  # 使用新的子命令
-        project_path
-    ]
-
-    # 含义：根据操作系统打开新窗口
-    try:
-        if sys.platform == "darwin":  # macOS
-            # 含义：macOS 使用 osascript 打开新 Terminal 窗口
-            script = f'''
-            tell application "Terminal"
-                activate
-                do script "cd '{cli_path.parent}' && {' '.join(run_command)}"
-            end tell
-            '''
-            subprocess.run(["osascript", "-e", script])
-            if USE_RICH and console:
-                console.print("[green]✅ 已在新 Terminal 窗口中启动[/green]")
-            else:
-                print("✅ 已在新 Terminal 窗口中启动")
-
-        elif sys.platform == "win32":  # Windows
-            # 含义：Windows 使用 start 命令
-            subprocess.Popen(
-                f'start "LX Project - {project_name}" {" ".join(run_command)}',
-                shell=True
-            )
-            if USE_RICH and console:
-                console.print("[green]✅ 已在新命令提示符窗口中启动[/green]")
-            else:
-                print("✅ 已在新命令提示符窗口中启动")
-
-        else:  # Linux 等其他系统
-            # 含义：尝试使用 gnome-terminal 或 xterm
-            terminal_commands = [
-                ["gnome-terminal", "--", *run_command],
-                ["xterm", "-e", *run_command],
-                ["konsole", "-e", *run_command]
-            ]
-            launched = False
-            for cmd in terminal_commands:
-                try:
-                    subprocess.Popen(cmd)
-                    launched = True
-                    break
-                except FileNotFoundError:
-                    continue
-            if launched:
-                if USE_RICH and console:
-                    console.print("[green]✅ 已在新终端窗口中启动[/green]")
-                else:
-                    print("✅ 已在新终端窗口中启动")
-            else:
-                if USE_RICH and console:
-                    console.print("[yellow]⚠️  无法找到可用终端，将在当前窗口运行[/yellow]")
-                else:
-                    print("⚠️  无法找到可用终端，将在当前窗口运行")
-                run_project(project_path, config)
-                return
-
-    except Exception as e:
-        if USE_RICH and console:
-            console.print(f"[red]❌ 打开新窗口失败：{str(e)}[/red]")
-        else:
-            print(f"❌ 打开新窗口失败：{str(e)}")
-        # 含义：降级为当前窗口运行
-        run_project(project_path, config)
-# =============================================================================
-# 运行项目
-# =============================================================================
-
-def run_project(project_path: str, config: Dict[str, Any]):
-    """运行项目"""
-    api_config = config.get("api", {})
-    if not api_config.get("key"):
-        global_api = pm.get_global_api_config()
-        if global_api.get("key"):
-            config["api"] = global_api
-        else:
-            if USE_RICH and console:
-                console.print("[red]❌ 未配置 API，请先在项目配置或系统设置中配置[/red]")
-            else:
-                print("❌ 未配置 API，请先在项目配置或系统设置中配置")
-            return
-
-    pm.save_project(project_path, config)
-
-    try:
-        loader = ProjectLoader(project_path)
-        controller = SystemController(initial_state_id=config.get("initial_state", "root"))
-        project_info = loader.apply_to(controller)
-
-        if USE_RICH and console:
-            if Panel:
-                console.print(Panel(f"[bold blue]{project_info['project_name']} 已启动[/bold blue]"))
-            else:
-                console.print(f"[bold blue]{project_info['project_name']} 已启动[/bold blue]")
-            console.print(f"初始状态：{project_info['initial_state']}")
-        else:
-            print(f"=== {project_info['project_name']} 已启动 ===")
-
-        while True:
-            try:
-                user_input = typer.prompt("用户")
-                if user_input.lower() in ["exit", "quit"]:
-                    break
-                feedback = controller.process_user_input(user_input)
-                ai_response = controller.get_last_response()
-                output_data = controller.get_last_output()
-
-                if output_data:
-                    if USE_RICH and console:
-                        console.print(f"[yellow]📤 输出数据：{output_data}[/yellow]")
-                    else:
-                        print(f"📤 输出数据：{output_data}")
-
-                if ai_response:
-                    if USE_RICH and console:
-                        console.print(f"[bold white]AI: {ai_response}[/bold white]")
-                    else:
-                        print(f"AI: {ai_response}")
-                if USE_RICH and console:
-                    if feedback.event_history:
-                        evt = feedback.event_history[-1]
-                        if "error" in evt.event_type.value:
-                            console.print(f"[dim red]⚠️  {evt.message}[/dim red]")
-            except KeyboardInterrupt:
-                break
-            except Exception as e:
-                if USE_RICH and console:
-                    console.print(f"[red]❌ 错误：{str(e)}[/red]")
-                else:
-                    print(f"❌ 错误：{str(e)}")
-    except Exception as e:
-        if USE_RICH and console:
-            console.print(f"[red]❌ 启动失败：{str(e)}[/red]")
-        else:
-            print(f"❌ 启动失败：{str(e)}")
-
-
-# =============================================================================
-# 单窗口运行子命令（供新窗口调用）
+# 子命令：单窗口运行（供新窗口调用）
 # =============================================================================
 
 @app.command("run-single")
-def run_single(project_path: str):
+def run_single_cmd(project_path: str, conv_id: str = None):
     """单窗口运行项目（供新窗口调用）"""
-    # 含义：加载项目配置
     config = pm.open_project(project_path)
-    # 含义：直接运行，不返回主菜单
-    run_project(project_path, config)
+    run_project(project_path, config, conv_id)
 
 
 # =============================================================================
-# 入口点
+# 入口点（修复打包问题）
 # =============================================================================
+
+def main_entry():
+    """主入口函数（打包后调用）"""
+    app()
 
 if __name__ == "__main__":
-    app()
+    main_entry()
