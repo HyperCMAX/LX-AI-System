@@ -3,11 +3,6 @@ __pycache__/
 *.py[cod]
 *$py.class
 *.so
-*.o
-*.pyd
-
-# C extensions
-*.so
 
 # Distribution / packaging
 .Python
@@ -30,44 +25,43 @@ wheels/
 # Virtual environments
 .venv/
 env/
-venv/
 ENV/
 
-# IDEs and editors
+# IDEs
 .idea/
 .vscode/
 *.swp
 *.swo
 
-# OS
+# OS generated files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
 
 # Logs
 *.log
 
-# Test
-.pytest_cache/
-.coverage
-htmlcov/
+# Checkpoints
+*.cache
 
-# Docs
+# Local configuration
+config_local.json
+api_config_local.json
+
+# Testing
+test_*.py
+tests/
+pytest.ini
+
+# Documentation
 docs/_build/
 
-# Local config
-config_local.py
+# cx_Freeze build artifacts
+build_exe/
 
-# Exclude temporary build products but keep final installers
+# PyInstaller build artifacts
 *.spec
-*.zip
-
-# Ignore the published packages
-publish/
-
-# Local configuration files
-config.json
-api_config.json
-
-# Environment specific
-.env
-.env.local
