@@ -1,3 +1,83 @@
+# LX-AI: Large Language Model Application Framework
+
+LX-AI is an advanced application framework designed for interacting with large language models (LLMs), providing a comprehensive solution for AI-powered interactions and data management.
+
+## Features
+
+- **Multi-model Support**: Compatible with various LLM providers including OpenAI GPT series, Claude, Gemini, and locally deployed models.
+- **Interactive CLI Interface**: User-friendly command-line interface for seamless interactions.
+- **Conversation Management**: Sophisticated conversation history tracking and management.
+- **Data Persistence**: Robust local storage of conversations and configurations.
+- **Flexible Configuration**: Easy API key and preference configuration.
+
+## Installation
+
+There are two ways to use LX-AI:
+
+### Method 1: Using Pre-built Installer (Recommended)
+
+Download the appropriate installer for your platform:
+
+- **Mac Users**: Download [LX_AI_Mac_Installer.zip](LX_AI_Mac_Installer.zip)
+  - Extract the ZIP file
+  - Navigate to the extracted folder and double-click on the LX_AI executable to run the application
+
+### Method 2: From Source
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/HyperCMAX/LX-AI-System.git
+   cd LX-AI-System
+   ```
+
+2. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+## Usage
+
+Run the application:
+
+```bash
+cd src
+python cli.py
+```
+
+Or execute the packaged binary:
+
+```bash
+cd src
+./LX_AI
+```
+
+## Building from Source
+
+To rebuild the executable:
+
+```bash
+cd src
+python setup.py build
+```
+
+The executable will be created in a subdirectory under [src](file:///Users/hypercmax/Documents/Project/LX/src/core/__init__.py).
+
+## Contributing
+
+We welcome contributions! Please follow standard open-source practices:
+1. Fork the repository
+2. Create a feature branch
+3. Submit a pull request with your changes
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](file:///Users/hypercmax/Documents/Project/LX/LICENSE) file for details.
+
+## Contact
+
+Author: ArXav
+Email: eurexon@outlook.com
+
 # LX AI 系统 - 完整文件目录与技术文档
 
 作者：ArXav (eurexon@outlook.com)

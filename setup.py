@@ -54,10 +54,8 @@ build_exe_options = {
     "excludes": [],
     "include_files": [],
     "optimize": 2,
-    "compressed": True,
     "include_msvcrt": True,
-    "silent": True,
-    "build_exe": "dist/LX_AI_Standalone"  # 独立构建目录
+    "silent": True
 }
 
 # =============================================================================
@@ -87,5 +85,32 @@ setup(
     version="1.0",
     description="状态驱动 AI 系统 - 项目管理 CLI",
     options={"build_exe": build_exe_options},
-    executables=executables
+    executables=executables,
+    distclass=None,
+    script_name=None,
+    script_args=None,
+    cmdclass=None,
+    ext_modules=None,
+    classifiers=None,
+    download_url=None,
+    data_files=None,
+    project_urls=None,
+    provides=None,
+    obsoletes=None,
+    package_dir=None,
+    packages=None,
+    py_modules=None,
+    url=None,
+    license=None,
+    long_description=None,
+    author=None,
+    author_email=None,
+    maintainer=None,
+    maintainer_email=None,
+    keywords=None,
+    platforms=None,
+    requires=None,
+    command_packages=None,
+    fullname=None,
+    dist_dir="dist/LX_AI_Standalone"
 )
