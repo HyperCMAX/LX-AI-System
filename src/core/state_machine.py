@@ -91,21 +91,40 @@ class StateMachine:
 
     # 含义：获取当前状态可披露的命令列表
     def get_disclosed_commands(self) -> List:
-        # 含义：获取当前状态对象
-        current_state = self.get_current_state()
-        # 含义：如果无当前状态，返回空列表
-        if not current_state:
+        """
+        【关键修复】只返回当前状态可用的命令
+        """
+        current = self.get_current_state()
+        if not current:
             return []
+        
+        # 含义：获取当前状态可用的命令 ID 列表
+        available_ids = current.available_command_ids or []
+        
+        # =============================================================
+        # 【关键修复】将命令 ID 转换为小写后查找（兼容大小写）
+        # =============================================================
+        disclosed = []
+        for cmd_id in available_ids:
+            # 修复：尝试小写查找
+            cmd = self.registry.get_command(cmd_id.lower())
+            if cmd:
+                disclosed.append(cmd)
+            else:
+                # 调试：如果找不到，打印警告
+                print(f"⚠️  警告：命令 '{cmd_id}' 未在注册中心找到（已注册命令：{[c.id for c in self.registry.commands.values()]})")
+        
+        return disclosed
 
-        # 含义：从注册中心获取状态允许的普通命令
-        cmds = self.registry.get_disclosed_commands(current_state.available_command_ids)
-
-        # 含义：获取系统逻辑命令（如返回上一级），通常全局可用
-        sys_cmds = self.registry.get_system_commands()
-
-        # 含义：合并普通命令和系统命令
-        # 注意：这里简单合并，实际可根据逻辑命令的适用状态做过滤
-        return cmds + sys_cmds
+    def is_command_available(self, command_id: str) -> bool:
+        """检查命令在当前状态是否可用"""
+        current = self.get_current_state()
+        if not current:
+            return False
+        # 修复：大小写不敏感
+        command_id_lower = command_id.lower()
+        available_lower = [cmd.lower() for cmd in (current.available_command_ids or [])]
+        return command_id_lower in available_lower
 
     # 含义：获取当前状态的父亲状态 ID（用于返回上一级逻辑）
     def get_parent_state_id(self) -> Optional[str]:
