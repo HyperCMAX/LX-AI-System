@@ -117,7 +117,9 @@ class ArchitectOutput(BaseModel):
     thought: str
     # 含义：当前上下文的状态描述（动态生成）
     current_state_description: str
-    # 含义：基于上下文推荐的可用命令列表
-    available_commands: List[DynamicCommandDefinition]
-    # 含义：是否需要切换状态（如进入子任务）
+    # 含义：从现有命令中选择可用的命令 ID 列表
+    selected_command_ids: List[str] = Field(default_factory=list)
+    # 含义：可选：提议创建新状态
+    suggest_new_state: Optional[str] = None
+    # 含义：可选：提议跳转到哪个状态
     suggest_state_change: Optional[str] = None

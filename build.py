@@ -37,7 +37,22 @@ def build():
     
     # 复制配置文件模板
     dist_lx_ai = dist_dir / "LX_AI"
-    if dist_lx_ai.exists():
+    
+    # 检查是否为单文件（macOS 下 PyInstaller 默认生成单文件）
+    if dist_lx_ai.is_file():
+        # 这是单文件可执行文件，需要创建输出目录
+        output_dir = dist_dir / "LX_AI_App"
+        output_dir.mkdir(exist_ok=True)
+        
+        # 移动可执行文件到输出目录
+        executable = dist_lx_ai
+        new_executable = output_dir / "LX_AI"
+        shutil.move(str(executable), str(new_executable))
+        
+        # 现在使用新的目录
+        dist_lx_ai = output_dir
+    
+    if dist_lx_ai.exists() and dist_lx_ai.is_dir():
         # 复制 api_config.json 模板
         api_config_template = {
             "api": {
@@ -54,7 +69,7 @@ def build():
         print(f"📁 可执行文件位置：{dist_lx_ai / 'LX_AI'}")
         print("\n📋 使用说明：")
         print("  1. 首次运行会自动创建配置文件")
-        print("  2. 运行：./dist/LX_AI/LX_AI")
+        print("  2. 运行：./dist/LX_AI_App/LX_AI")
         print("  3. 配置 API：系统设置 → 全局 API 配置")
     else:
         print("❌ 打包失败")

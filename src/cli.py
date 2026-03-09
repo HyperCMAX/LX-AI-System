@@ -777,8 +777,13 @@ def states_menu(project_path: str, config: Dict):
     
     while True:
         states = config.get("states", [])
-        choices = [Choice(f"📍 {s['id']}: {s['description']}", i) 
-                   for i, s in enumerate(states)]
+        
+        # 显示模式标签
+        choices = []
+        for i, s in enumerate(states):
+            mode_label = "🌟自由" if s.get("mode") == "free" else "🔒稳定"
+            choices.append(Choice(f"📍 {s['id']}: {s['description']} [{mode_label}]", i))
+        
         choices.extend([
             Choice("➕ 添加状态", "add"),
             Choice("🔙 返回", "back")
@@ -790,9 +795,7 @@ def states_menu(project_path: str, config: Dict):
             pm.save_project(project_path, config)
             break
         elif choice == "add":
-            # =============================================================
-            # 1. 状态 ID 验证（强制格式）
-            # =============================================================
+            # 状态 ID 验证
             while True:
                 state_id = questionary.text(
                     "状态 ID（只允许小写字母、数字、下划线，必须以字母开头）"
@@ -802,12 +805,10 @@ def states_menu(project_path: str, config: Dict):
                     print("❌ 状态 ID 不能为空")
                     continue
                 
-                # 验证格式
                 if not re.match(r'^[a-z][a-z0-9_-]*$', state_id):
                     print("❌ 格式错误！示例：root, search_state, settings")
                     continue
                 
-                # 检查是否重复
                 existing_ids = [s["id"] for s in states]
                 if state_id in existing_ids:
                     print(f"❌ 状态 ID '{state_id}' 已存在")
@@ -816,15 +817,18 @@ def states_menu(project_path: str, config: Dict):
                 break
             
             state_desc = questionary.text("状态描述").ask()
+            
+            # =============================================================
+            # 【关键】模式选择菜单（创建时）
+            # =============================================================
             state_mode = questionary.select(
-                "模式",
+                "模式选择",
                 choices=[
-                    Choice("稳定模式 (stable)", "stable"),
-                    Choice("自由模式 (free)", "free")
+                    Choice("🔒 稳定模式", "stable"),
+                    Choice("🌟 自由模式", "free")
                 ]
             ).ask()
             
-            # 父状态选择
             parent_choices = [Choice("(无)", None)]
             for s in states:
                 parent_choices.append(Choice(s["id"], s["id"]))
@@ -838,16 +842,23 @@ def states_menu(project_path: str, config: Dict):
                 "available_commands": [],
                 "command_transitions": {}
             })
-            print("✅ 状态已添加")
+            pm.save_project(project_path, config)
+            mode_name = "自由模式" if state_mode == "free" else "稳定模式"
+            print(f"✅ 状态已添加（{mode_name}）")
             
         elif isinstance(choice, int):
             state = states[choice]
             old_id = state["id"]
+            mode_label = "🌟自由" if state.get("mode") == "free" else "🔒稳定"
             
+            # =============================================================
+            # 【关键】模式选择作为独立菜单项
+            # =============================================================
             state_action = questionary.select(
-                f"状态：{old_id}",
+                f"状态：{old_id} [{mode_label}]",
                 choices=[
-                    Choice("✏️  编辑", "edit"),
+                    Choice("✏️  编辑描述", "edit_desc"),
+                    Choice("🎯 模式选择", "mode"),
                     Choice("🔖 重命名状态", "rename"),
                     Choice("📋 编辑可用命令", "commands"),
                     Choice("🔗 编辑命令跳转", "transitions"),
@@ -856,20 +867,47 @@ def states_menu(project_path: str, config: Dict):
                 ]
             ).ask()
             
-            if state_action == "edit":
-                state["description"] = questionary.text("描述", default=state["description"]).ask()
-                state["mode"] = questionary.select(
-                    "模式",
-                    choices=[
-                        Choice("稳定模式 (stable)", "stable"),
-                        Choice("自由模式 (free)", "free")
-                    ],
-                    default=state["mode"]
+            if state_action == "edit_desc":
+                state["description"] = questionary.text(
+                    "状态描述",
+                    default=state.get("description", "")
                 ).ask()
+                
+                parent_choices = [Choice("(无)", None)]
+                for s in states:
+                    if s["id"] != old_id:
+                        parent_choices.append(Choice(s["id"], s["id"]))
+                state["parent_id"] = questionary.select(
+                    "父状态 ID",
+                    choices=parent_choices,
+                    default=state.get("parent_id")
+                ).ask()
+                
+                pm.save_project(project_path, config)
+                print("✅ 状态描述已更新")
+                
+            elif state_action == "mode":
+                # =============================================================
+                # 【关键】模式选择菜单（编辑时）- 稳定/自由 二选一
+                # =============================================================
+                current_mode = state.get("mode", "stable")
+                
+                new_mode = questionary.select(
+                    "模式选择",
+                    choices=[
+                        Choice("🔒 稳定模式", "stable"),
+                        Choice("🌟 自由模式", "free")
+                    ],
+                    default=current_mode
+                ).ask()
+                
+                state["mode"] = new_mode
+                pm.save_project(project_path, config)
+                
+                mode_name = "自由模式" if new_mode == "free" else "稳定模式"
+                print(f"✅ 运行模式已设置为：{mode_name}")
+                
             elif state_action == "rename":
-                # =============================================================
-                # 【新增】重命名状态（带验证和引用更新）
-                # =============================================================
                 while True:
                     new_id = questionary.text(
                         f"新状态 ID（当前：{old_id}）"
@@ -895,25 +933,20 @@ def states_menu(project_path: str, config: Dict):
                     break
                 
                 if new_id and new_id != old_id:
-                    # 更新状态 ID
                     state["id"] = new_id
                     
-                    # 更新所有引用
                     updated_count = 0
                     for s in states:
-                        # 更新 parent_id
                         if s.get("parent_id") == old_id:
                             s["parent_id"] = new_id
                             updated_count += 1
                         
-                        # 更新 command_transitions 中的目标状态
                         if "command_transitions" in s:
                             for cmd_id, target in list(s["command_transitions"].items()):
                                 if target == old_id:
                                     s["command_transitions"][cmd_id] = new_id
                                     updated_count += 1
                     
-                    # 更新 initial_state
                     if config.get("initial_state") == old_id:
                         config["initial_state"] = new_id
                         updated_count += 1
@@ -921,23 +954,27 @@ def states_menu(project_path: str, config: Dict):
                     pm.save_project(project_path, config)
                     print(f"✅ 状态已重命名：{old_id} → {new_id}")
                     print(f"✅ 已更新 {updated_count} 个引用")
+                    
             elif state_action == "commands":
                 all_cmds = config.get("commands", [])
                 if not all_cmds:
                     print("⚠️  请先在命令管理中添加命令")
                     continue
                 
-                cmd_ids = [c["id"] for c in all_cmds]
+                if state.get("mode") == "free":
+                    print("\n⚠️  自由模式：命令集由 AI 动态生成\n")
+                else:
+                    print("\n🔒  稳定模式：只能使用此处配置的命令\n")
+                
                 current = state.get("available_commands", [])
                 if current is None:
                     current = []
                 if not isinstance(current, list):
                     current = []
-                valid_defaults = [cmd for cmd in current if cmd in cmd_ids]
                 
                 cmd_choices = []
                 for c in all_cmds:
-                    is_checked = c["id"] in valid_defaults
+                    is_checked = c["id"] in current
                     cmd_choices.append(Choice(c["id"], c["id"], checked=is_checked))
                 
                 selected = questionary.checkbox(
@@ -951,20 +988,27 @@ def states_menu(project_path: str, config: Dict):
                     
             elif state_action == "transitions":
                 all_states = [s["id"] for s in config.get("states", [])]
+                
                 for cmd_id in state.get("available_commands", []):
+                    target_choices = [Choice("(无跳转)", None)]
+                    for s in all_states:
+                        target_choices.append(Choice(s, s))
+                    
+                    current_target = state.get("command_transitions", {}).get(cmd_id)
                     target = questionary.select(
                         f"命令 '{cmd_id}' 跳转到",
-                        choices=[Choice("(无跳转)", None)] + [Choice(s, s) for s in all_states],
-                        default=state.get("command_transitions", {}).get(cmd_id)
+                        choices=target_choices,
+                        default=current_target
                     ).ask()
+                    
                     if target:
                         if "command_transitions" not in state:
                             state["command_transitions"] = {}
                         state["command_transitions"][cmd_id] = target
+                        
             elif state_action == "delete":
                 confirm = questionary.confirm(f"确定删除状态 '{old_id}'？").ask()
                 if confirm:
-                    # 检查是否有其他状态引用此状态
                     ref_count = 0
                     for s in states:
                         if s.get("parent_id") == old_id:
@@ -983,7 +1027,6 @@ def states_menu(project_path: str, config: Dict):
                     
                     config["states"].pop(choice)
                     
-                    # 清理引用
                     for s in states:
                         if s.get("parent_id") == old_id:
                             s["parent_id"] = None
@@ -994,7 +1037,6 @@ def states_menu(project_path: str, config: Dict):
                                 if target != old_id
                             }
                     
-                    # 更新 initial_state
                     if config.get("initial_state") == old_id:
                         config["initial_state"] = "root"
                     

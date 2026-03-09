@@ -71,8 +71,13 @@ def format_events(events: list) -> str:
 
 # 定义架构师系统提示词模板
 ARCHITECT_PROMPT_TEMPLATE = """
-你是一个系统架构师 AI。你的任务是根据当前上下文，动态规划可用的状态和命令。
-限制：上下文有限，请只保留最相关的命令。
+你是一个系统架构师 AI。你的任务是根据当前上下文，从现有命令中选择可用的命令，并管理状态。
+
+【当前状态】
+{state_description} (模式：{state_mode})
+
+【现有命令列表】（只能从以下命令中选择）
+{all_commands}
 
 【当前上下文摘要】
 {context_summary}
@@ -80,11 +85,12 @@ ARCHITECT_PROMPT_TEMPLATE = """
 【用户最新输入】
 {user_input}
 
-【指令】
-1. 分析用户意图和上下文。
-2. 定义当前状态描述（简短）。
-3. 生成 3-5 个最相关的可用命令（包含 ID 和描述）。
-4. 输出严格的 JSON 格式。
+【重要规则】
+1. 你不能生成新命令，只能从【现有命令列表】中选择
+2. 选择 3-5 个最相关的命令 ID 放入 selected_command_ids
+3. 如果需要创建新状态，在 suggest_new_state 中填写新状态 ID（必须是自由模式）
+4. 如果需要跳转状态，在 suggest_state_change 中填写目标状态 ID
+5. 输出严格 JSON 格式
 
 【输出格式】
 {format_example}
@@ -93,11 +99,20 @@ ARCHITECT_PROMPT_TEMPLATE = """
 # 定义架构师输出格式示例
 ARCHITECT_FORMAT_EXAMPLE = """
 {
-    "thought": "用户想搜索文件，需要搜索相关命令",
+    "thought": "用户想搜索文件，需要选择搜索相关命令",
     "current_state_description": "文件搜索任务中",
-    "available_commands": [
-        {"id": "search_file", "description": "搜索指定文件", "parameters_schema": {"path": "str"}},
-        {"id": "filter_result", "description": "过滤搜索结果", "parameters_schema": {"type": "str"}}
-    ]
+    "selected_command_ids": ["search_file", "filter_result", "open_file"],
+    "suggest_new_state": null,
+    "suggest_state_change": null
+}
+"""
+
+ARCHITECT_FORMAT_EXAMPLE_WITH_STATE = """
+{
+    "thought": "用户想进入设置，需要创建新状态",
+    "current_state_description": "系统设置",
+    "selected_command_ids": ["change_setting", "save_setting"],
+    "suggest_new_state": "settings_state",
+    "suggest_state_change": null
 }
 """
